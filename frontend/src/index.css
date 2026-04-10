@@ -1,0 +1,91 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* === 新建推送任务页面 - 全局表单交互样式 === */
+
+/* 焦点时蓝色高亮边框 (Ant Design 默认已支持，此处确保一致性) */
+.task-create-page .ant-input:focus,
+.task-create-page .ant-input-focused,
+.task-create-page .ant-input-affix-wrapper-focused,
+.task-create-page .ant-select-focused .ant-select-selector,
+.task-create-page .ant-picker-focused {
+  border-color: #1677ff !important;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
+}
+
+/* 校验失败时红色边框 */
+.task-create-page .ant-input-status-error,
+.task-create-page .ant-input-affix-wrapper-status-error,
+.task-create-page .ant-select-status-error .ant-select-selector,
+.task-create-page .ant-picker-status-error {
+  border-color: #ff4d4f !important;
+}
+
+.task-create-page .ant-input-status-error:focus,
+.task-create-page .ant-input-affix-wrapper-status-error.ant-input-affix-wrapper-focused,
+.task-create-page .ant-select-status-error.ant-select-focused .ant-select-selector,
+.task-create-page .ant-picker-status-error.ant-picker-focused {
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.1) !important;
+}
+
+/* 统一错误提示样式 */
+.task-create-page .field-error {
+  color: #ff4d4f;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* 必填项红色星号 */
+.task-create-page .required-mark {
+  color: #ff4d4f;
+  margin-right: 4px;
+}
+
+/* 步骤4占位样式 */
+.task-create-page .goal-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #bfbfbf;
+}
+
+.task-create-page .goal-placeholder .goal-placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: #d9d9d9;
+}
+
+.task-create-page .goal-placeholder .goal-placeholder-text {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 侧边栏触发器样式 */
+.ant-layout-sider-trigger {
+  background-color: white !important;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* 侧边栏触发器图标颜色 */
+.ant-layout-sider-trigger .anticon {
+  color: #1890ff !important;
+}

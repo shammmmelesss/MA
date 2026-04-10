@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+prd/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Dependencies
+frontend/node_modules
+frontend/dist
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*.test
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (don't include in build context)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+logs/

@@ -1,0 +1,84 @@
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: game-marketing-postgres
+    environment:
+      POSTGRES_DB: game_marketing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - game-marketing-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: game-marketing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - game-marketing-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: game-marketing-backend
+    environment:
+      SERVER_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: game_marketing
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - game-marketing-network
+    restart: unless-stopped
+
+  # 前端服务
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: game-marketing-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - game-marketing-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  game-marketing-network:
+    driver: bridge
