@@ -20,3 +20,11 @@ frontend/dist/
 # IDE
 .vscode/
 .idea/
+
+# Tools
+.claude/
+.kiro/
+.trae/
+
+# PRD
+prd/

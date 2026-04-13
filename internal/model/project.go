@@ -48,7 +48,7 @@ type ProjectSpace struct {
 	Status            int         `json:"status" gorm:"default:1"`          // 1:正常, 0:禁用
 	ProjectManager    StringArray `json:"project_manager" gorm:"type:jsonb"`
 	AppPackages       StringArray `json:"app_packages" gorm:"type:jsonb"`
-	FirebaseProjectID string      `json:"firebase_project_id" gorm:"not null"`
+	FirebaseProjectID string      `json:"firebase_project_id"`
 	AccessKey         string      `json:"access_key"`
 	Creator           string      `json:"creator"`
 	Modifier          string      `json:"modifier"`
