@@ -43,13 +43,15 @@ func (s StringArray) Value() (driver.Value, error) {
 // ProjectSpace 项目空间定义
 type ProjectSpace struct {
 	ProjectID         int64       `json:"project_id" gorm:"primaryKey;autoIncrement"`
-	ProjectName       string      `json:"project_name" gorm:"not null;unique"`
+	ProjectName       string      `json:"project_name" gorm:"not null"`
+	LinkedProject     string      `json:"linked_project"`
 	Description       string      `json:"description"`
 	Status            int         `json:"status" gorm:"default:1"`          // 1:正常, 0:禁用
 	ProjectManager    StringArray `json:"project_manager" gorm:"type:jsonb"`
 	AppPackages       StringArray `json:"app_packages" gorm:"type:jsonb"`
 	FirebaseProjectID string      `json:"firebase_project_id"`
 	AccessKey         string      `json:"access_key"`
+	Secret            string      `json:"secret"`
 	Creator           string      `json:"creator"`
 	Modifier          string      `json:"modifier"`
 	CreateTime        time.Time   `json:"create_time" gorm:"autoCreateTime"`

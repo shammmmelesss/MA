@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Card,
   Descriptions,
-  List,
+  Table,
   Tag,
   Button,
   message,
@@ -180,6 +180,7 @@ const SystemConfig = () => {
           <>
             <Card title="基本信息" style={{ marginBottom: 24 }}>
               <Descriptions bordered column={{ xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}>
+                <Descriptions.Item label="项目ID">{currentProject.project_id}</Descriptions.Item>
                 <Descriptions.Item label="项目名称">{projectInfo.name}</Descriptions.Item>
                 <Descriptions.Item label="创建时间">{projectInfo.createTime}</Descriptions.Item>
                 <Descriptions.Item label="最后更新">{projectInfo.lastUpdate}</Descriptions.Item>
@@ -245,37 +246,32 @@ const SystemConfig = () => {
             </Card>
 
             <Card title="关联应用" style={{ marginBottom: 24 }}>
-              {projectInfo.apps.length > 0 ? (
-                <List
-                  itemLayout="horizontal"
-                  dataSource={projectInfo.apps}
-                  renderItem={(app) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={
-                          <div>
-                            <span>{app.name}</span>
-                            <Tag style={{ marginLeft: 8 }} color={
-                              app.status === '已上线' ? 'green' : 
-                              app.status === '审核中' ? 'blue' : 
-                              app.status === '草稿' ? 'default' : 
-                              app.status === '已拒绝' ? 'red' : 
-                              app.status === '已禁用' ? 'gray' : 'green'
-                            }>
-                              {app.status}
-                            </Tag>
-                          </div>
-                        }
-                        description={`平台: ${app.platform}`}
-                      />
-                    </List.Item>
-                  )}
-                />
-              ) : (
-                <div style={{ textAlign: 'center', padding: 24 }}>
-                  <p>暂无关联应用</p>
-                </div>
-              )}
+              <Table
+                dataSource={projectInfo.apps}
+                rowKey="app_id"
+                pagination={false}
+                locale={{ emptyText: '暂无关联应用' }}
+                columns={[
+                  { title: 'ID', dataIndex: 'app_id', key: 'app_id' },
+                  { title: '名称', dataIndex: 'name', key: 'name' },
+                  { title: '平台', dataIndex: 'platform', key: 'platform' },
+                  {
+                    title: '状态',
+                    dataIndex: 'status',
+                    key: 'status',
+                    render: (status) => (
+                      <Tag color={
+                        status === '已上线' ? 'green' :
+                        status === '审核中' ? 'blue' :
+                        status === '已拒绝' ? 'red' :
+                        status === '已禁用' ? 'default' : 'green'
+                      }>
+                        {status}
+                      </Tag>
+                    ),
+                  },
+                ]}
+              />
             </Card>
 
 

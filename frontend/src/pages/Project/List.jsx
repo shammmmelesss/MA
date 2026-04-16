@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import { Table, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, Radio } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import axios from 'axios'
 import { useProjects } from '../../App.jsx'
 
@@ -25,6 +25,18 @@ const appDetailColumns = [
   },
 ]
 
+// 模拟关联项目数据
+const linkedProjects = [
+  { value: '3283712931232', label: 'killer', project_name: 'killer' },
+  { value: '1234567890123', label: 'alpha', project_name: 'alpha' },
+]
+
+// 已选关联项目详情表列
+const linkedProjectColumns = [
+  { title: '项目ID', dataIndex: 'value', key: 'value' },
+  { title: '项目名称', dataIndex: 'project_name', key: 'project_name' },
+]
+
 // 模拟项目负责人数据
 const projectManagers = [
   { value: 'user1', label: '张三' },
@@ -33,8 +45,8 @@ const projectManagers = [
   { value: 'user4', label: '赵六' },
 ]
 
-// 生成随机AccessKey
-const generateAccessKey = () => {
+// 生成随机密钥
+const generateKey = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
   for (let i = 0; i < 32; i++) {
@@ -43,19 +55,35 @@ const generateAccessKey = () => {
   return result
 }
 
+// 只读复制输入框
+const ReadonlyCopyInput = ({ value, fieldName }) => {
+  const handleCopy = () => {
+    if (value) {
+      navigator.clipboard.writeText(value)
+      message.success(`${fieldName}已复制到剪贴板`)
+    }
+  }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', background: '#f5f5f5', border: '1px solid #d9d9d9', borderRadius: 6, padding: '4px 12px' }}>
+      <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 13, color: '#333', wordBreak: 'break-all' }}>
+        {value || ''}
+      </span>
+      <Button type="link" size="small" onClick={handleCopy} style={{ padding: '0 0 0 8px', flexShrink: 0 }}>
+        复制
+      </Button>
+    </div>
+  )
+}
+
 const ProjectList = () => {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
   const [form] = Form.useForm()
   const [editingProject, setEditingProject] = useState(null)
+  const [keyValue, setKeyValue] = useState('')
+  const [secretValue, setSecretValue] = useState('')
   const { refreshProjects } = useProjects()
-
-  // 状态选项
-  const statusOptions = [
-    { value: 1, label: '正常' },
-    { value: 0, label: '禁用' }
-  ]
 
   // 获取项目列表
   const fetchProjects = async () => {
@@ -71,68 +99,56 @@ const ProjectList = () => {
     }
   }
 
-  // 组件挂载时获取项目列表
   useEffect(() => {
     fetchProjects()
   }, [])
 
-  // 打开创建/编辑模态框
   const showModal = (project = null) => {
     setEditingProject(project)
     setVisible(true)
   }
 
-  // 当 Modal 打开时，设置表单值
   useEffect(() => {
     if (visible && editingProject) {
-      // 编辑模式：填充项目数据
+      const key = editingProject.access_key || generateKey()
+      const secret = editingProject.secret || generateKey()
+      setKeyValue(key)
+      setSecretValue(secret)
       form.setFieldsValue({
+        linked_project: editingProject.linked_project,
         project_name: editingProject.project_name,
         description: editingProject.description,
-        status: editingProject.status,
+        status: editingProject.status ?? 1,
         project_manager: editingProject.project_manager,
         app_packages: editingProject.app_packages || [],
         firebase_project_id: editingProject.firebase_project_id,
-        access_key: editingProject.access_key,
       })
     } else if (visible && !editingProject) {
-      // 创建模式：重置表单并设置默认值
+      const key = generateKey()
+      const secret = generateKey()
+      setKeyValue(key)
+      setSecretValue(secret)
       form.resetFields()
-      form.setFieldsValue({
-        access_key: generateAccessKey(),
-        status: 1
-      })
+      form.setFieldsValue({ status: 1 })
     }
   }, [visible, editingProject, form])
 
-  // 复制AccessKey到剪贴板
-  const copyAccessKey = () => {
-    const accessKey = form.getFieldValue('access_key')
-    if (accessKey) {
-      navigator.clipboard.writeText(accessKey)
-      message.success('AccessKey已复制到剪贴板')
-    }
-  }
-
-  // 关闭模态框
   const handleCancel = () => {
     setVisible(false)
     setEditingProject(null)
     form.resetFields()
   }
 
-  // 提交表单
   const handleSubmit = async (values) => {
     try {
+      const payload = { ...values, access_key: keyValue, secret: secretValue }
       if (editingProject) {
-        // 更新项目
-        values.modifier = 'current_user'
-        await axios.put(`/api/v1/projects/${editingProject.project_id}`, values)
+        payload.modifier = 'current_user'
+        await axios.put(`/api/v1/projects/${editingProject.project_id}`, payload)
         message.success('项目更新成功')
       } else {
-        // 创建项目
-        values.creator = 'current_user'
-        await axios.post('/api/v1/projects', values)
+        payload.creator = 'current_user'
+        await axios.post('/api/v1/projects', payload)
         message.success('项目创建成功')
       }
       setVisible(false)
@@ -144,7 +160,6 @@ const ProjectList = () => {
     }
   }
 
-  // 删除项目
   const handleDelete = async (projectId) => {
     try {
       await axios.delete(`/api/v1/projects/${projectId}`)
@@ -157,74 +172,61 @@ const ProjectList = () => {
     }
   }
 
-  // 表格列配置
   const columns = [
     {
       title: '项目ID',
-      dataIndex: 'project_id',
+      dataIndex: 'linked_project',
       key: 'project_id',
+      render: (linkedProject) => linkedProject || '-',
     },
     {
       title: '项目名称',
-      dataIndex: 'project_name',
+      dataIndex: 'linked_project',
       key: 'project_name',
+      render: (linkedProject) => {
+        const matched = linkedProjects.find(p => p.value === linkedProject)
+        return matched ? matched.label : (linkedProject || '-')
+      },
     },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-    },
+    { title: '描述', dataIndex: 'description', key: 'description' },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status) => {
-        return status === 1 ? '正常' : '禁用'
-      }
+      render: (status) => status === 1 ? '启用' : '停用',
     },
     {
       title: (
         <Tooltip title="仅展示有项目权限的用户">
-          <span>
-            项目负责人 <QuestionCircleOutlined style={{ marginLeft: 4 }} />
-          </span>
+          <span>项目负责人 <QuestionCircleOutlined style={{ marginLeft: 4 }} /></span>
         </Tooltip>
       ),
       dataIndex: 'project_manager',
       key: 'project_manager',
       render: (val) => {
         if (!val) return '-'
-        if (Array.isArray(val)) {
-          return (
-            <Space size="small">
-              {val.map((v, index) => {
-                const matched = projectManagers.find(m => m.value === v)
-                return (
-                  <Tag key={index}>{matched ? matched.label : v}</Tag>
-                )
-              })}
-            </Space>
-          )
-        }
-        const matched = projectManagers.find(m => m.value === val)
-        return matched ? matched.label : val
-      }
+        const arr = Array.isArray(val) ? val : [val]
+        return (
+          <Space size="small">
+            {arr.map((v, i) => {
+              const matched = projectManagers.find(m => m.value === v)
+              return <Tag key={i}>{matched ? matched.label : v}</Tag>
+            })}
+          </Space>
+        )
+      },
     },
     {
       title: '关联App包',
-      key: 'app_packages',
       dataIndex: 'app_packages',
+      key: 'app_packages',
       render: (packages) => (
         <Space size="small">
           {packages?.map((pkg, index) => {
             const matched = appPackages.find(ap => ap.value === pkg)
             return (
-              <Tag 
-                key={index} 
-                color={matched?.platform === 'android' ? 'blue' : 'green'}
-              >
-                {matched?.platform === 'android' ? 'Android: ' : 'iOS: '}
-                {pkg}
+              <Tag key={index} color={matched?.platform === 'android' ? 'blue' : 'green'}>
+                {matched?.platform === 'android' ? 'Android: ' : 'iOS: '}{pkg}
               </Tag>
             )
           })}
@@ -239,74 +241,34 @@ const ProjectList = () => {
       render: (val) => val || '-',
     },
     {
-      title: 'AccessKey',
-      dataIndex: 'access_key',
-      key: 'access_key',
-      render: (access_key) => (
-        access_key ? (
-          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-            {access_key.substring(0, 8)}...{access_key.substring(access_key.length - 8)}
-          </span>
-        ) : '-'
-      ),
-    },
-
-    {
       title: '创建时间',
       dataIndex: 'create_time',
       key: 'create_time',
       render: (time) => {
         if (!time) return '-'
-        const date = new Date(time)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        const seconds = String(date.getSeconds()).padStart(2, '0')
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-      }
+        return new Date(time).toLocaleString('zh-CN', { hour12: false })
+      },
     },
-    {
-      title: '修改人',
-      dataIndex: 'modifier',
-      key: 'modifier',
-    },
+    { title: '修改人', dataIndex: 'modifier', key: 'modifier' },
     {
       title: '修改时间',
       dataIndex: 'update_time',
       key: 'update_time',
       render: (time) => {
         if (!time) return '-'
-        const date = new Date(time)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        const seconds = String(date.getSeconds()).padStart(2, '0')
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-      }
+        return new Date(time).toLocaleString('zh-CN', { hour12: false })
+      },
     },
     {
       title: '操作',
       key: 'action',
+      fixed: 'right',
       render: (_, record) => (
         <>
-          <Button 
-            type="link" 
-            icon={<EditOutlined />} 
-            onClick={() => showModal(record)}
-            style={{ marginRight: 8 }}
-          >
+          <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)} style={{ marginRight: 8 }}>
             编辑
           </Button>
-          <Button 
-            type="link" 
-            danger 
-            icon={<DeleteOutlined />} 
-            onClick={() => handleDelete(record.project_id)}
-          >
+          <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.project_id)}>
             删除
           </Button>
         </>
@@ -323,18 +285,10 @@ const ProjectList = () => {
       </div>
 
       <div style={{ maxHeight: '80vh', overflow: 'auto', width: '100%' }}>
-        <Table 
-          columns={columns.map(column => {
-            if (column.key === 'action') {
-              return {
-                ...column,
-                fixed: 'right'
-              };
-            }
-            return column;
-          })}
-          dataSource={projects} 
-          rowKey="project_id" 
+        <Table
+          columns={columns}
+          dataSource={projects}
+          rowKey="project_id"
           loading={loading}
           pagination={{ pageSize: 10 }}
           scroll={{ x: 'max-content' }}
@@ -346,68 +300,42 @@ const ProjectList = () => {
         open={visible}
         onCancel={handleCancel}
         footer={null}
+        width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Form.Item
-            name="project_name"
-            label="项目名称"
-            rules={[{ required: true, message: '请输入项目名称' }]}
-          >
-            <Input placeholder="请输入项目名称" />
-          </Form.Item>
+        <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
 
+          {/* 关联项目 */}
           <Form.Item
-            name="description"
-            label="描述"
+            name="linked_project"
+            label="关联项目"
+            rules={[{ required: true, message: '请选择关联项目' }]}
           >
-            <Input.TextArea placeholder="请输入项目描述" rows={4} />
-          </Form.Item>
-
-          <Form.Item
-            name="firebase_project_id"
-            label="Firebase Project ID"
-            rules={[{ required: true, message: '请输入 Firebase Project ID' }]}
-          >
-            <Input placeholder="请输入 Firebase Project ID" />
-          </Form.Item>
-
-          <Form.Item
-            name="status"
-            label="状态"
-            initialValue={1}
-          >
-            <Select placeholder="请选择状态">
-              {statusOptions.map(option => (
-                <Option key={option.value} value={option.value}>
-                  {option.label}
-                </Option>
+            <Select placeholder="请选择关联项目" allowClear>
+              {linkedProjects.map(p => (
+                <Option key={p.value} value={p.value}>{p.label}</Option>
               ))}
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="project_manager"
-            label={
-              <Tooltip title="仅展示有项目权限的用户">
-                <span>
-                  项目负责人 <QuestionCircleOutlined style={{ marginLeft: 4 }} />
-                </span>
-              </Tooltip>
-            }
-            rules={[{ required: true, message: '请选择项目负责人' }]}
-          >
-            <Select
-              mode="multiple"
-              style={{ width: '100%' }}
-              placeholder="请选择项目负责人"
-              options={projectManagers}
-            />
+          {/* 关联项目详情表 */}
+          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.linked_project !== cur.linked_project}>
+            {({ getFieldValue }) => {
+              const selected = getFieldValue('linked_project')
+              const detail = linkedProjects.find(p => p.value === selected)
+              return detail ? (
+                <Table
+                  dataSource={[detail]}
+                  columns={linkedProjectColumns}
+                  rowKey="value"
+                  pagination={false}
+                  size="small"
+                  style={{ marginBottom: 24, marginTop: -16 }}
+                />
+              ) : null
+            }}
           </Form.Item>
 
+          {/* 关联app包 */}
           <Form.Item
             name="app_packages"
             label="关联app包"
@@ -417,16 +345,32 @@ const ProjectList = () => {
               mode="multiple"
               style={{ width: '100%' }}
               placeholder="请选择App包"
-              options={appPackages}
-            />
+              tagRender={({ label, value, onClose }) => {
+                const pkg = appPackages.find(p => p.value === value)
+                const prefix = pkg?.platform === 'android' ? 'Android' : 'iOS'
+                return (
+                  <Tag
+                    color={pkg?.platform === 'android' ? 'blue' : 'green'}
+                    closable
+                    onClose={onClose}
+                    style={{ marginRight: 4 }}
+                  >
+                    {prefix}：{value}
+                  </Tag>
+                )
+              }}
+            >
+              {appPackages.map(p => (
+                <Option key={p.value} value={p.value}>{p.label}</Option>
+              ))}
+            </Select>
           </Form.Item>
 
+          {/* 已选App包详情表 */}
           <Form.Item noStyle shouldUpdate={(prev, cur) => prev.app_packages !== cur.app_packages}>
             {({ getFieldValue }) => {
               const selected = getFieldValue('app_packages') || []
-              const details = selected
-                .map(id => appPackages.find(p => p.value === id))
-                .filter(Boolean)
+              const details = selected.map(id => appPackages.find(p => p.value === id)).filter(Boolean)
               return details.length > 0 ? (
                 <Table
                   dataSource={details}
@@ -434,37 +378,61 @@ const ProjectList = () => {
                   rowKey="value"
                   pagination={false}
                   size="small"
-                  style={{ marginBottom: 24 }}
+                  style={{ marginBottom: 24, marginTop: -16 }}
                 />
               ) : null
             }}
           </Form.Item>
 
+          {/* 项目负责人 */}
           <Form.Item
-            name="access_key"
-            label="AccessKey"
+            name="project_manager"
+            label={
+              <Tooltip title="仅展示有项目权限的用户">
+                <span>项目负责人 <QuestionCircleOutlined style={{ marginLeft: 4 }} /></span>
+              </Tooltip>
+            }
+            rules={[{ required: true, message: '请选择项目负责人' }]}
           >
-            <Input
-              placeholder="自动生成AccessKey"
-              readOnly
-              style={{ backgroundColor: '#f5f5f5', color: '#999' }}
-              suffix={
-                <CopyOutlined
-                  onClick={copyAccessKey}
-                  style={{ cursor: 'pointer', color: '#999' }}
-                />
-              }
-            />
+            <Select mode="multiple" style={{ width: '100%' }} placeholder="下拉选择" options={projectManagers} />
           </Form.Item>
 
+          {/* firebase projectid */}
+          <Form.Item
+            name="firebase_project_id"
+            label="firebase projectid"
+            rules={[{ required: true, message: '请输入 firebase projectid' }]}
+          >
+            <Input placeholder="请输入" />
+          </Form.Item>
 
+          {/* key（只读） */}
+          <Form.Item label="key">
+            <ReadonlyCopyInput value={keyValue} fieldName="key" />
+          </Form.Item>
 
-          <Form.Item style={{ textAlign: 'right' }}>
-            <Button onClick={handleCancel} style={{ marginRight: 8 }}>
-              取消
-            </Button>
+          {/* secret（只读） */}
+          <Form.Item label="secret">
+            <ReadonlyCopyInput value={secretValue} fieldName="secret" />
+          </Form.Item>
+
+          {/* 状态 */}
+          <Form.Item name="status" label="状态" initialValue={1}>
+            <Radio.Group>
+              <Radio value={1}>启用</Radio>
+              <Radio value={0}>停用</Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          {/* 描述 */}
+          <Form.Item name="description" label="描述">
+            <Input.TextArea placeholder="请输入" rows={4} />
+          </Form.Item>
+
+          <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
+            <Button onClick={handleCancel} style={{ marginRight: 8 }}>取消</Button>
             <Button type="primary" htmlType="submit">
-              {editingProject ? '更新' : '创建'}
+              {editingProject ? '更新' : '确定'}
             </Button>
           </Form.Item>
         </Form>

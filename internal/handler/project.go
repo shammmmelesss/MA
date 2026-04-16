@@ -53,6 +53,12 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 	if v, ok := body["project_name"].(string); ok {
 		project.ProjectName = v
 	}
+	if v, ok := body["linked_project"].(string); ok {
+		project.LinkedProject = v
+		if project.ProjectName == "" {
+			project.ProjectName = v
+		}
+	}
 	if v, ok := body["description"].(string); ok {
 		project.Description = v
 	}
@@ -64,6 +70,9 @@ func (h *projectHandler) CreateProject(c *gin.Context) {
 	}
 	if v, ok := body["access_key"].(string); ok {
 		project.AccessKey = v
+	}
+	if v, ok := body["secret"].(string); ok {
+		project.Secret = v
 	}
 	if v, ok := body["creator"].(string); ok {
 		project.Creator = v
@@ -147,6 +156,12 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 	if v, ok := body["project_name"].(string); ok {
 		project.ProjectName = v
 	}
+	if v, ok := body["linked_project"].(string); ok {
+		project.LinkedProject = v
+		if project.ProjectName == "" {
+			project.ProjectName = v
+		}
+	}
 	if v, ok := body["description"].(string); ok {
 		project.Description = v
 	}
@@ -158,6 +173,9 @@ func (h *projectHandler) UpdateProject(c *gin.Context) {
 	}
 	if v, ok := body["access_key"].(string); ok {
 		project.AccessKey = v
+	}
+	if v, ok := body["secret"].(string); ok {
+		project.Secret = v
 	}
 	if v, ok := body["creator"].(string); ok {
 		project.Creator = v
