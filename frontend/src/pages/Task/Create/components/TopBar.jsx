@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Input, Button, Modal, message, Space } from 'antd'
+import { Input, Button, Modal, message, Space, Typography } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useTaskFormContext } from '../hooks/useTaskForm'
@@ -11,6 +11,9 @@ function TopBar() {
   const [saving, setSaving] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [taskId, setTaskId] = useState(null)
+  const [submitModalOpen, setSubmitModalOpen] = useState(false)
+  const [submitReason, setSubmitReason] = useState('')
+  const [reasonError, setReasonError] = useState(false)
 
   const confirmLeave = () => {
     Modal.confirm({
@@ -47,10 +50,15 @@ function TopBar() {
   }
 
   const doSubmit = async () => {
+    if (!submitReason.trim()) {
+      setReasonError(true)
+      return
+    }
     setSubmitting(true)
     try {
       const payload = getSubmitPayload()
       payload.status = 'submitted'
+      payload.submit_reason = submitReason.trim()
       const params = new URLSearchParams(window.location.search)
       const projectId = params.get('project_id') || localStorage.getItem('currentProjectId')
       if (projectId) payload.project_id = Number(projectId)
@@ -62,6 +70,7 @@ function TopBar() {
         if (res.task_id) setTaskId(res.task_id)
       }
       message.success('提交成功')
+      setSubmitModalOpen(false)
       navigate('/tasks/list')
     } catch {
       message.error('提交失败，请重试')
@@ -80,21 +89,56 @@ function TopBar() {
       message.warning('请输入任务名称')
       return
     }
-    Modal.confirm({
-      title: '提示',
-      content: (
-        <div>
-          <p>提交后将进入审批，确定提交吗?</p>
-          <p style={{ color: '#8c8c8c', fontSize: 13 }}>（注意：审批超时将自动关闭任务！）</p>
-        </div>
-      ),
-      okText: '确定',
-      cancelText: '取消',
-      onOk: doSubmit,
-    })
+    setSubmitReason('')
+    setReasonError(false)
+    setSubmitModalOpen(true)
   }
 
+  const handleSubmitModalCancel = () => {
+    if (submitting) return
+    setSubmitModalOpen(false)
+  }
+
+  const { Text } = Typography
+
   return (
+    <>
+    <Modal
+      title="提示"
+      open={submitModalOpen}
+      onCancel={handleSubmitModalCancel}
+      onOk={doSubmit}
+      okText="确定"
+      cancelText="取消"
+      confirmLoading={submitting}
+      width={460}
+    >
+      <p style={{ marginBottom: 4 }}>
+        确定后将进入审批，确定提交吗？
+        <Text type="secondary" style={{ fontSize: 13, marginLeft: 6 }}>
+          （注意：审批超时将自动关闭任务！）
+        </Text>
+      </p>
+      <div style={{ marginTop: 16 }}>
+        <div style={{ marginBottom: 6 }}>
+          <Text type="danger">*</Text>
+          <Text style={{ marginLeft: 2 }}>原因</Text>
+        </div>
+        <Input.TextArea
+          value={submitReason}
+          onChange={(e) => {
+            setSubmitReason(e.target.value)
+            if (e.target.value.trim()) setReasonError(false)
+          }}
+          placeholder="请输入"
+          rows={3}
+          status={reasonError ? 'error' : undefined}
+        />
+        {reasonError && (
+          <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>请输入原因</div>
+        )}
+      </div>
+    </Modal>
     <div style={{
       display: 'flex',
       alignItems: 'center',
@@ -149,6 +193,7 @@ function TopBar() {
         </Button>
       </Space>
     </div>
+    </>
   )
 }
 

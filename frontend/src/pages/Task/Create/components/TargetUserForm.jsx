@@ -4,6 +4,7 @@ import { PlusOutlined } from '@ant-design/icons'
 import { useTaskFormContext } from '../hooks/useTaskForm'
 import { estimateUsers } from '../api'
 import AttributeFilterRow from './AttributeFilterRow'
+import { getFieldMeta } from './FieldSelector'
 
 const { Text } = Typography
 
@@ -88,18 +89,36 @@ function TargetUserForm() {
   const hasConflict = useMemo(() => detectConflicts(attributeFilters), [attributeFilters])
 
   const handleFilterChange = (id, field, value) => {
-    const updated = attributeFilters.map(f =>
-      f.id === id ? { ...f, [field]: value } : f
-    )
+    const updated = attributeFilters.map(f => {
+      if (f.id !== id) return f
+      const changes = { [field]: value }
+      if (field === 'field') {
+        const newMeta = getFieldMeta(value)
+        changes.operator = newMeta?.dataType === 'segment' ? 'in_segment' : '='
+        changes.value = ''
+      }
+      return { ...f, ...changes }
+    })
     updateTargetUser('attributeFilters', updated)
   }
 
   const handleChildChange = (parentId, childId, field, value) => {
-    const updated = attributeFilters.map(f =>
-      f.id === parentId
-        ? { ...f, children: (f.children || []).map(c => c.id === childId ? { ...c, [field]: value } : c) }
-        : f
-    )
+    const updated = attributeFilters.map(f => {
+      if (f.id !== parentId) return f
+      return {
+        ...f,
+        children: (f.children || []).map(c => {
+          if (c.id !== childId) return c
+          const changes = { [field]: value }
+          if (field === 'field') {
+            const newMeta = getFieldMeta(value)
+            changes.operator = newMeta?.dataType === 'segment' ? 'in_segment' : '='
+            changes.value = ''
+          }
+          return { ...c, ...changes }
+        }),
+      }
+    })
     updateTargetUser('attributeFilters', updated)
   }
 

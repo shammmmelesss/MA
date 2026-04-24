@@ -189,7 +189,7 @@ const CreateCampaign = () => {
               </div>
               
               <div style={{ marginBottom: 24 }}>
-                <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 500 }}>发送时间</h3>
+                <h3 style={{ marginBottom: 16, fontSize: 14, fontWeight: 500 }}>触发规则</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   <span>在</span>
                   <DatePicker 

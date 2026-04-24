@@ -49,13 +49,7 @@ function AttributeFilterRow({ filter, onChange, onRemove, showAdd, onAdd }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
       <FieldSelector value={filter.field}
-        onChange={(val) => {
-          onChange('field', val)
-          // Reset operator when field type changes
-          const newMeta = getFieldMeta(val)
-          if (newMeta?.dataType === 'segment') onChange('operator', 'in_segment')
-          else onChange('operator', '=')
-        }}
+        onChange={(val) => onChange('field', val)}
         style={{ width: 160 }} />
 
       <Select value={filter.operator} onChange={(val) => onChange('operator', val)}
@@ -64,9 +58,9 @@ function AttributeFilterRow({ filter, onChange, onRemove, showAdd, onAdd }) {
       {renderValueInput()}
 
       {showAdd && (
-        <Button type="link" size="small" icon={<PlusOutlined />} onClick={onAdd}>添加</Button>
+        <Button type="link" size="small" icon={<PlusOutlined />} onClick={onAdd}>筛选</Button>
       )}
-      <Button type="link" danger size="small" onClick={onRemove}>删除</Button>
+      <Button type="text" size="small" icon={<DeleteOutlined />} onClick={onRemove} style={{ color: '#bfbfbf' }} />
     </div>
   )
 }

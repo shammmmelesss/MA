@@ -68,6 +68,8 @@ const FIELD_GROUPS = [
 /* Flatten all fields for lookup */
 const ALL_FIELDS = FIELD_GROUPS.flatMap(g => g.fields.map(f => ({ ...f, category: g.category, categoryLabel: g.categoryLabel })))
 
+export const DEFAULT_FIELD = FIELD_GROUPS[0]?.fields[0]?.value ?? ''
+
 export function getFieldMeta(value) {
   return ALL_FIELDS.find(f => f.value === value) || null
 }
@@ -82,7 +84,7 @@ function FieldItem({ field, isFav, onToggleFav, onSelect, isActive }) {
 
   return (
     <div
-      onClick={() => onSelect(field.value)}
+      onMouseDown={(e) => { e.preventDefault(); onSelect(field.value) }}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '8px 12px', cursor: 'pointer', fontSize: 14,
@@ -99,7 +101,7 @@ function FieldItem({ field, isFav, onToggleFav, onSelect, isActive }) {
       <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#8c8c8c', fontSize: 13 }}>
         {typeIcon && <span>{typeIcon}</span>}
         <span>{typeLabel}</span>
-        <span onClick={e => { e.stopPropagation(); onToggleFav(field.value) }} style={{ cursor: 'pointer' }}>
+        <span onMouseDown={e => { e.preventDefault(); e.stopPropagation(); onToggleFav(field.value) }} style={{ cursor: 'pointer' }}>
           {isFav ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined style={{ color: '#d9d9d9' }} />}
         </span>
       </span>

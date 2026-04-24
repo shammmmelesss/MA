@@ -29,8 +29,11 @@ const initialState = {
   },
   triggerA: {
     startDate: '',
+    startTime: '00:00',
     endDate: '',
-    events: [{ id: '1', eventName: '', filters: [] }],
+    endTime: '00:00',
+    events: [{ id: '1', eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }],
+    eventLogic: 'and',
     globalFilters: [],
     deliveryTiming: 'immediate',
     delayValue: 1,
@@ -40,8 +43,11 @@ const initialState = {
   },
   triggerAB: {
     startDate: '',
+    startTime: '00:00',
     endDate: '',
-    events: [{ id: '1', eventName: '', filters: [] }],
+    endTime: '00:00',
+    events: [{ id: '1', eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }],
+    eventLogic: 'and',
     globalFilters: [],
     deliveryTiming: 'immediate',
     delayValue: 1,
@@ -247,7 +253,7 @@ export function useTaskForm() {
       ...prev,
       attributeFilters: [
         ...prev.attributeFilters,
-        { id: generateId(), field: '', operator: '=', value: '', logic: 'and', children: [] },
+        { id: generateId(), field: 'account_id', operator: '=', value: '', logic: 'and', children: [] },
       ],
     }))
   }, [])
@@ -264,7 +270,7 @@ export function useTaskForm() {
       ...prev,
       attributeFilters: prev.attributeFilters.map(f =>
         f.id === parentId
-          ? { ...f, children: [...(f.children || []), { id: generateId(), field: '', operator: '=', value: '', logic: 'and' }] }
+          ? { ...f, children: [...(f.children || []), { id: generateId(), field: 'account_id', operator: '=', value: '', logic: 'and' }] }
           : f
       ),
     }))
@@ -343,8 +349,8 @@ export function useTaskForm() {
       pushType: newType,
       scheduleOnce: initialState.scheduleOnce,
       scheduleRepeat: { ...initialState.scheduleRepeat },
-      triggerA: { ...initialState.triggerA, events: [{ id: generateId(), eventName: '', filters: [] }], globalFilters: [], frequency: { ...initialState.triggerA.frequency } },
-      triggerAB: { ...initialState.triggerAB, events: [{ id: generateId(), eventName: '', filters: [] }], globalFilters: [], frequency: { ...initialState.triggerAB.frequency } },
+      triggerA: { ...initialState.triggerA, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { ...initialState.triggerA.frequency } },
+      triggerAB: { ...initialState.triggerAB, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { ...initialState.triggerAB.frequency } },
       topic: '',
     }))
   }, [])
@@ -358,10 +364,10 @@ export function useTaskForm() {
         case 'schedule_repeat':
           return { ...base, schedule_repeat: { cycle: state.scheduleRepeat.cycle, week_days: state.scheduleRepeat.weekDays, month_days: state.scheduleRepeat.monthDays, time: state.scheduleRepeat.time, end_date: state.scheduleRepeat.endDate } }
         case 'trigger_a':
-          return { ...base, trigger_a: { start_date: state.triggerA.startDate, end_date: state.triggerA.endDate, events: state.triggerA.events.map(e => ({ event_name: e.eventName, filters: e.filters })), global_filters: state.triggerA.globalFilters, delivery_timing: state.triggerA.deliveryTiming, delay_value: state.triggerA.delayValue, delay_unit: state.triggerA.delayUnit, frequency_enabled: state.triggerA.frequencyEnabled, frequency: state.triggerA.frequency } }
+          return { ...base, trigger_a: { start_date: state.triggerA.startDate, start_time: state.triggerA.startTime, end_date: state.triggerA.endDate, end_time: state.triggerA.endTime, events: state.triggerA.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: state.triggerA.eventLogic, global_filters: state.triggerA.globalFilters, delivery_timing: state.triggerA.deliveryTiming, delay_value: state.triggerA.delayValue, delay_unit: state.triggerA.delayUnit, frequency_enabled: state.triggerA.frequencyEnabled, frequency: state.triggerA.frequency } }
         case 'trigger_ab': {
           const ab = state.triggerAB
-          return { ...base, trigger_ab: { start_date: ab.startDate, end_date: ab.endDate, events: ab.events.map(e => ({ event_name: e.eventName, filters: e.filters })), global_filters: ab.globalFilters, delivery_timing: ab.deliveryTiming, delay_value: ab.delayValue, delay_unit: ab.delayUnit, frequency_enabled: ab.frequencyEnabled, frequency: ab.frequency, b_event: ab.bEvent, time_window: ab.timeWindow, time_window_unit: ab.timeWindowUnit } }
+          return { ...base, trigger_ab: { start_date: ab.startDate, start_time: ab.startTime, end_date: ab.endDate, end_time: ab.endTime, events: ab.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: ab.eventLogic, global_filters: ab.globalFilters, delivery_timing: ab.deliveryTiming, delay_value: ab.delayValue, delay_unit: ab.delayUnit, frequency_enabled: ab.frequencyEnabled, frequency: ab.frequency, b_event: ab.bEvent, time_window: ab.timeWindow, time_window_unit: ab.timeWindowUnit } }
         }
         case 'topic':
           return { ...base, topic: state.topic }

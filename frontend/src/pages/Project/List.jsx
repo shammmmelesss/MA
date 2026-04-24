@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Table, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip, Radio } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined, SearchOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined } from '@ant-design/icons'
 import axios from 'axios'
 import { useProjects } from '../../App.jsx'
 
@@ -79,6 +79,44 @@ const ProjectList = () => {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(false)
   const [visible, setVisible] = useState(false)
+  const [searchName, setSearchName] = useState('')
+  const [searchId, setSearchId] = useState('')
+  const [searchStatus, setSearchStatus] = useState(undefined)
+  const [visibleFields, setVisibleFields] = useState({})
+
+  const toggleVisible = (recordId, field) => {
+    setVisibleFields(prev => ({ ...prev, [`${recordId}_${field}`]: !prev[`${recordId}_${field}`] }))
+  }
+
+  const maskValue = (val) => {
+    if (!val) return '-'
+    return val.slice(0, 4) + '••••••••••••••••••••••••' + val.slice(-4)
+  }
+
+  const MaskedCell = ({ val, recordId, field }) => {
+    const key = `${recordId}_${field}`
+    const show = visibleFields[key]
+    if (!val) return <span>-</span>
+    return (
+      <Space size={4}>
+        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>
+          {show ? val : maskValue(val)}
+        </span>
+        <Button
+          type="text" size="small"
+          icon={show ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+          onClick={() => toggleVisible(recordId, field)}
+          style={{ color: '#999' }}
+        />
+        <Button
+          type="text" size="small"
+          icon={<CopyOutlined />}
+          onClick={() => { navigator.clipboard.writeText(val); message.success('已复制') }}
+          style={{ color: '#999' }}
+        />
+      </Space>
+    )
+  }
   const [form] = Form.useForm()
   const [editingProject, setEditingProject] = useState(null)
   const [keyValue, setKeyValue] = useState('')
@@ -172,6 +210,21 @@ const ProjectList = () => {
     }
   }
 
+  const filteredProjects = useMemo(() => {
+    return projects.filter(p => {
+      const nameMatch = searchName
+        ? (p.project_name || p.linked_project || '').toLowerCase().includes(searchName.toLowerCase())
+        : true
+      const idMatch = searchId
+        ? (p.linked_project || '').toLowerCase().includes(searchId.toLowerCase())
+        : true
+      const statusMatch = searchStatus !== undefined
+        ? p.status === searchStatus
+        : true
+      return nameMatch && idMatch && statusMatch
+    })
+  }, [projects, searchName, searchId, searchStatus])
+
   const columns = [
     {
       title: '项目ID',
@@ -241,6 +294,18 @@ const ProjectList = () => {
       render: (val) => val || '-',
     },
     {
+      title: 'Key',
+      dataIndex: 'access_key',
+      key: 'access_key',
+      render: (val, record) => <MaskedCell val={val} recordId={record.project_id} field="key" />,
+    },
+    {
+      title: 'Secret',
+      dataIndex: 'secret',
+      key: 'secret',
+      render: (val, record) => <MaskedCell val={val} recordId={record.project_id} field="secret" />,
+    },
+    {
       title: '创建时间',
       dataIndex: 'create_time',
       key: 'create_time',
@@ -278,7 +343,36 @@ const ProjectList = () => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+        <Space wrap>
+          <Input
+            placeholder="搜索项目名称"
+            prefix={<SearchOutlined />}
+            allowClear
+            style={{ width: 200 }}
+            value={searchName}
+            onChange={e => setSearchName(e.target.value)}
+          />
+          <Input
+            placeholder="搜索项目ID"
+            prefix={<SearchOutlined />}
+            allowClear
+            style={{ width: 200 }}
+            value={searchId}
+            onChange={e => setSearchId(e.target.value)}
+          />
+          <Select
+            placeholder="状态筛选"
+            allowClear
+            style={{ width: 120 }}
+            value={searchStatus}
+            onChange={val => setSearchStatus(val)}
+            options={[
+              { label: '启用', value: 1 },
+              { label: '停用', value: 0 },
+            ]}
+          />
+        </Space>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
           创建项目
         </Button>
@@ -287,7 +381,7 @@ const ProjectList = () => {
       <div style={{ maxHeight: '80vh', overflow: 'auto', width: '100%' }}>
         <Table
           columns={columns}
-          dataSource={projects}
+          dataSource={filteredProjects}
           rowKey="project_id"
           loading={loading}
           pagination={{ pageSize: 10 }}
