@@ -118,6 +118,7 @@ function App() {
       label: '用户画像',
       children: [
         { key: '/profile/players', label: '用户管理' },
+        { key: '/profile/attributes', label: '用户属性' },
         { key: '/profile/tags', label: '标签管理' },
         { key: '/profile/segments', label: '分群管理' },
       ],
