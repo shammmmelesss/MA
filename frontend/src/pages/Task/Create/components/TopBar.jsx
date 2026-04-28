@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Input, Button, Modal, message, Space, Typography } from 'antd'
+import { Input, Button, Modal, message, Space, Typography, Select } from 'antd'
 import { ArrowLeftOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useTaskFormContext } from '../hooks/useTaskForm'
@@ -14,6 +14,13 @@ function TopBar() {
   const [submitModalOpen, setSubmitModalOpen] = useState(false)
   const [submitReason, setSubmitReason] = useState('')
   const [reasonError, setReasonError] = useState(false)
+  const [approver, setApprover] = useState('张三')
+
+  const approverOptions = [
+    { label: '张三', value: '张三' },
+    { label: '李四', value: '李四' },
+    { label: '王五', value: '王五' },
+  ]
 
   const confirmLeave = () => {
     Modal.confirm({
@@ -59,6 +66,7 @@ function TopBar() {
       const payload = getSubmitPayload()
       payload.status = 'submitted'
       payload.submit_reason = submitReason.trim()
+      payload.approver = approver
       const params = new URLSearchParams(window.location.search)
       const projectId = params.get('project_id') || localStorage.getItem('currentProjectId')
       if (projectId) payload.project_id = Number(projectId)
@@ -91,6 +99,7 @@ function TopBar() {
     }
     setSubmitReason('')
     setReasonError(false)
+    setApprover('张三')
     setSubmitModalOpen(true)
   }
 
@@ -137,6 +146,17 @@ function TopBar() {
         {reasonError && (
           <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>请输入原因</div>
         )}
+      </div>
+      <div style={{ marginTop: 16 }}>
+        <div style={{ marginBottom: 6 }}>
+          <Text>审批人</Text>
+        </div>
+        <Select
+          value={approver}
+          onChange={setApprover}
+          options={approverOptions}
+          style={{ width: '100%' }}
+        />
       </div>
     </Modal>
     <div style={{

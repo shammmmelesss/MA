@@ -21,6 +21,7 @@ type PushTaskHandler interface {
 	GetTopics(c *gin.Context)
 	GetEvents(c *gin.Context)
 	GetTemplates(c *gin.Context)
+	TestSend(c *gin.Context)
 }
 
 // pushTaskHandler 推送任务处理器实现
@@ -200,6 +201,21 @@ func (h *pushTaskHandler) GetEvents(c *gin.Context) {
 		{"id": "add_to_cart", "name": "加入购物车"},
 	}
 	c.JSON(http.StatusOK, gin.H{"events": events})
+}
+
+// TestSend 测试发送推送通知
+func (h *pushTaskHandler) TestSend(c *gin.Context) {
+	var req struct {
+		Luid    string `json:"luid" binding:"required"`
+		Title   string `json:"title"`
+		Content string `json:"content"`
+		Image   string `json:"image_url"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "测试推送已发送", "luid": req.Luid})
 }
 
 // GetTemplates 获取内容模板列表（模拟数据）

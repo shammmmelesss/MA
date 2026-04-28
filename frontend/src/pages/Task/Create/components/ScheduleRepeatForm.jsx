@@ -3,6 +3,7 @@ import { Select, Radio, Switch, InputNumber, Tooltip, Typography, DatePicker } f
 import { InfoCircleOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useTaskFormContext } from '../hooks/useTaskForm'
+import TimezoneTooltip from './TimezoneTooltip'
 
 const { Text } = Typography
 
@@ -118,11 +119,7 @@ function ScheduleRepeatForm() {
           placeholder="请选择时间"
           style={{ width: 110 }}
         />
-        <Tooltip title="推送将按用户设备所在时区执行">
-          <span style={{ color: '#8c8c8c', cursor: 'pointer', fontSize: 14 }}>
-            用户时区
-          </span>
-        </Tooltip>
+        <TimezoneTooltip color="#8c8c8c">用户时区</TimezoneTooltip>
       </div>
 
       <div style={{ marginBottom: 16 }}>

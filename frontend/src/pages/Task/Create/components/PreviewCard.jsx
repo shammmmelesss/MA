@@ -1,9 +1,29 @@
-import React from 'react'
-import { Typography } from 'antd'
+import React, { useState } from 'react'
+import { Typography, Button, Modal, Form, Input, message } from 'antd'
+import { testSend } from '../api'
 
 const { Text } = Typography
 
 function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
+  const [modalOpen, setModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [form] = Form.useForm()
+
+  const handleTestSend = async () => {
+    try {
+      const { luid } = await form.validateFields()
+      setLoading(true)
+      await testSend({ luid, title, content, image_url: imageUrl })
+      message.success('测试推送已发送')
+      setModalOpen(false)
+      form.resetFields()
+    } catch (err) {
+      if (err?.errorFields) return
+      message.error('发送失败，请稍后重试')
+    } finally {
+      setLoading(false)
+    }
+  }
   const isFloating = notifStyle.basic === 'floating'
 
   return (
@@ -112,6 +132,34 @@ function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
           )}
         </div>
       </div>
+
+      <Button
+        type="primary"
+        style={{ marginTop: 16, width: '100%' }}
+        onClick={() => setModalOpen(true)}
+      >
+        测试发送
+      </Button>
+
+      <Modal
+        title="测试发送"
+        open={modalOpen}
+        onOk={handleTestSend}
+        onCancel={() => { setModalOpen(false); form.resetFields() }}
+        okText="确定"
+        cancelText="取消"
+        confirmLoading={loading}
+      >
+        <Form form={form} layout="horizontal" labelCol={{ span: 4 }}>
+          <Form.Item
+            label="luid"
+            name="luid"
+            rules={[{ required: true, message: '请输入luid' }]}
+          >
+            <Input placeholder="请输入" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

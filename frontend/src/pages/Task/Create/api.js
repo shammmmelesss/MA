@@ -46,3 +46,8 @@ export async function getTemplates() {
   const res = await axios.get(`${BASE}/templates`)
   return res.data
 }
+
+export async function testSend(data) {
+  const res = await axios.post(`${BASE}/test-send`, data)
+  return res.data
+}

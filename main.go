@@ -230,6 +230,7 @@ func main() {
 			pushTasks.GET("/topics", pushTaskHandler.GetTopics)
 			pushTasks.GET("/events", pushTaskHandler.GetEvents)
 			pushTasks.GET("/templates", pushTaskHandler.GetTemplates)
+			pushTasks.POST("/test-send", pushTaskHandler.TestSend)
 		}
 	}
 

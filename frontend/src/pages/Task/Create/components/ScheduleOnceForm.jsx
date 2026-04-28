@@ -1,7 +1,7 @@
-import { DatePicker, TimePicker, Tooltip, Typography } from 'antd'
-import { InfoCircleOutlined } from '@ant-design/icons'
+import { DatePicker, TimePicker, Typography } from 'antd'
 import dayjs from 'dayjs'
 import { useTaskFormContext } from '../hooks/useTaskForm'
+import TimezoneTooltip from './TimezoneTooltip'
 
 const { Text } = Typography
 
@@ -88,11 +88,7 @@ function ScheduleOnceForm() {
           status={showPastError ? 'error' : undefined}
           disabledTime={disabledTime}
         />
-        <Tooltip title="推送将按用户设备所在时区执行">
-          <span style={{ color: '#1677ff', cursor: 'pointer', fontSize: 14 }}>
-            用户时区
-          </span>
-        </Tooltip>
+        <TimezoneTooltip color="#1677ff">用户时区</TimezoneTooltip>
         {showPastError && (
           <div style={{ color: '#ff4d4f', fontSize: 13, marginLeft: 80, width: '100%' }}>
             推送时间不能早于当前时间
