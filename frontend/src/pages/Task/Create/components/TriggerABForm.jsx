@@ -1,42 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Select, InputNumber, Typography, Space } from 'antd'
 import { useTaskFormContext } from '../hooks/useTaskForm'
-import { getEvents } from '../api'
 import TriggerAForm from './TriggerAForm'
+import EventCombinationForm from './EventCombinationForm'
 
 const { Text } = Typography
 
 function TriggerABForm() {
   const { state, updatePushTiming } = useTaskFormContext()
   const { triggerAB } = state
-  const [eventOptions, setEventOptions] = useState([])
 
-  useEffect(() => {
-    getEvents().then((data) => {
-      setEventOptions(Array.isArray(data) ? data : [])
-    }).catch(() => setEventOptions([]))
-  }, [])
+  // EventCombinationForm uses stateKey="triggerAB.b" producing paths like "triggerAB.b.events"
+  // Remap to the actual flat fields: bEvents, bEventLogic, etc.
+  const updateBEvents = (field, value) => {
+    const remapped = field.replace(/^triggerAB\.b\.(.+)$/, (_, key) => {
+      const capitalized = key.charAt(0).toUpperCase() + key.slice(1)
+      return `triggerAB.b${capitalized}`
+    })
+    updatePushTiming(remapped, value)
+  }
 
   const bEventExtra = (
-    <div style={{  paddingTop: 16, marginTop: 8, marginBottom: 16 }}>
-      <h4 style={{ marginBottom: 12 }}>B 事件配置（未完成事件）</h4>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 8 }}>
-          <Text type="danger">*</Text> B 事件
-        </label>
-        <Select
-          value={triggerAB.bEvent || undefined}
-          onChange={(val) => updatePushTiming('triggerAB.bEvent', val)}
-          placeholder="选择B事件"
-          style={{ width: 200 }}
-          options={eventOptions.map(e => ({ label: e.name || e, value: e.name || e }))}
-          showSearch
-        />
-      </div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 8 }}>
-          <Text type="danger">*</Text> 时间窗口
-        </label>
+    <div style={{ paddingTop: 1, marginTop: 8, marginBottom: 16 }}>
+      <div style={{ marginBottom: 12 }}>
         <Space>
           <Text>完成A后</Text>
           <InputNumber
@@ -54,9 +40,23 @@ function TriggerABForm() {
               { label: '天', value: 'days' },
             ]}
           />
-          <Text>内未完成B则触发</Text>
+          <Text>内未完成以下事件</Text>
         </Space>
       </div>
+      <label style={{ display: 'block', marginBottom: 8, color: '#262626' }}>
+      
+      </label>
+      <EventCombinationForm
+        eventItems={triggerAB.bEvents}
+        eventLogic={triggerAB.bEventLogic ?? 'and'}
+        eventTimeWindow={1}
+        eventTimeWindowUnit="natural_day"
+        hideTimeWindow
+        simple
+        title="未完成以下事件"
+        onUpdate={updateBEvents}
+        stateKey="triggerAB.b"
+      />
     </div>
   )
 

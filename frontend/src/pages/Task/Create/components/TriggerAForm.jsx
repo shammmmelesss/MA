@@ -1,5 +1,5 @@
 import React from 'react'
-import { DatePicker, TimePicker, Select, InputNumber, Switch, Typography, Space } from 'antd'
+import { DatePicker, TimePicker, Select, InputNumber, Radio, Typography, Space } from 'antd'
 import dayjs from 'dayjs'
 import { useTaskFormContext } from '../hooks/useTaskForm'
 import EventCombinationForm from './EventCombinationForm'
@@ -28,6 +28,8 @@ function TriggerAForm({ stateKey = 'triggerA', extraContent }) {
         <EventCombinationForm
           eventItems={data.events}
           eventLogic={data.eventLogic ?? 'and'}
+          eventTimeWindow={data.eventTimeWindow ?? 1}
+          eventTimeWindowUnit={data.eventTimeWindowUnit ?? 'natural_month'}
           onUpdate={updatePushTiming}
           stateKey={stateKey}
         />
@@ -109,56 +111,34 @@ function TriggerAForm({ stateKey = 'triggerA', extraContent }) {
         )}
       </div>
 
-      {/* 频率控制 */}
+      {/* 参与限制 */}
       <div style={{ marginBottom: 16 }}>
-        <label style={{ display: 'block', marginBottom: 8 }}>频率控制</label>
-        <Switch
-          checked={data.frequencyEnabled}
-          onChange={(checked) => updatePushTiming(`${stateKey}.frequencyEnabled`, checked)}
-        />
+        <label style={{ display: 'block', marginBottom: 8 }}>参与限制</label>
+        <Radio.Group
+          value={data.frequencyEnabled ? 'multiple' : 'once'}
+          onChange={(e) => updatePushTiming(`${stateKey}.frequencyEnabled`, e.target.value === 'multiple')}
+        >
+          <Radio value="once">参与 1 次</Radio>
+          <Radio value="multiple">参与多次</Radio>
+        </Radio.Group>
         {data.frequencyEnabled && (
-          <div style={{ marginTop: 12, padding: 12, background: '#fafafa', borderRadius: 6 }}>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Space>
-                <Text>每日最多</Text>
-                <InputNumber
-                  min={0}
-                  value={data.frequency.daily}
-                  onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, daily: val || 0 })}
-                  style={{ width: 80 }}
-                />
-                <Text>次</Text>
-              </Space>
-              <Space>
-                <Text>每周最多</Text>
-                <InputNumber
-                  min={0}
-                  value={data.frequency.weekly}
-                  onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, weekly: val || 0 })}
-                  style={{ width: 80 }}
-                />
-                <Text>次</Text>
-              </Space>
-              <Space>
-                <Text>每月最多</Text>
-                <InputNumber
-                  min={0}
-                  value={data.frequency.monthly}
-                  onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, monthly: val || 0 })}
-                  style={{ width: 80 }}
-                />
-                <Text>次</Text>
-              </Space>
-              <Space>
-                <Text>触发间隔 ≥</Text>
-                <InputNumber
-                  min={0}
-                  value={data.frequency.intervalMinutes}
-                  onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, intervalMinutes: val || 0 })}
-                  style={{ width: 80 }}
-                />
-                <Text>分钟</Text>
-              </Space>
+          <div style={{ marginTop: 12 }}>
+            <Space wrap>
+              <Text>同一个用户</Text>
+              <InputNumber
+                min={1}
+                value={data.frequency.naturalDays}
+                onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, naturalDays: val || 1 })}
+                style={{ width: 80 }}
+              />
+              <Text>自然日内，最多参与</Text>
+              <InputNumber
+                min={1}
+                value={data.frequency.maxCount}
+                onChange={(val) => updatePushTiming(`${stateKey}.frequency`, { ...data.frequency, maxCount: val || 1 })}
+                style={{ width: 80 }}
+              />
+              <Text>次</Text>
             </Space>
           </div>
         )}

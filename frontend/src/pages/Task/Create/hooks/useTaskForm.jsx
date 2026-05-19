@@ -34,12 +34,14 @@ const initialState = {
     endTime: '00:00',
     events: [{ id: '1', eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }],
     eventLogic: 'and',
+    eventTimeWindow: 1,
+    eventTimeWindowUnit: 'natural_day',
     globalFilters: [],
     deliveryTiming: 'immediate',
     delayValue: 1,
     delayUnit: 'minutes',
     frequencyEnabled: false,
-    frequency: { daily: 0, weekly: 0, monthly: 0, intervalMinutes: 0 },
+    frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 },
   },
   triggerAB: {
     startDate: '',
@@ -48,13 +50,16 @@ const initialState = {
     endTime: '00:00',
     events: [{ id: '1', eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }],
     eventLogic: 'and',
+    eventTimeWindow: 1,
+    eventTimeWindowUnit: 'natural_day',
     globalFilters: [],
     deliveryTiming: 'immediate',
     delayValue: 1,
     delayUnit: 'minutes',
     frequencyEnabled: false,
-    frequency: { daily: 0, weekly: 0, monthly: 0, intervalMinutes: 0 },
-    bEvent: '',
+    frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 },
+    bEvents: [{ id: '1', eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }],
+    bEventLogic: 'and',
     timeWindow: 1,
     timeWindowUnit: 'hours',
   },
@@ -125,7 +130,8 @@ function validateTriggerA(state) {
   if (t.events.length === 0 || t.events.every(e => !e.eventName)) errors.push({ field: 'triggerA.events', message: '请至少添加一个完成事件' })
   if (t.frequencyEnabled) {
     const f = t.frequency
-    if (f.daily === 0 && f.weekly === 0 && f.monthly === 0) errors.push({ field: 'triggerA.frequency', message: '推送次数不能为0' })
+    if (!f.naturalDays || f.naturalDays <= 0) errors.push({ field: 'triggerA.frequency', message: '自然日数不能为0' })
+    if (!f.maxCount || f.maxCount <= 0) errors.push({ field: 'triggerA.frequency', message: '最多参与次数不能为0' })
   }
   return errors
 }
@@ -133,7 +139,7 @@ function validateTriggerA(state) {
 function validateTriggerAB(state) {
   const errors = validateTriggerA({ ...state, triggerA: state.triggerAB })
   const ab = state.triggerAB
-  if (!ab.bEvent) errors.push({ field: 'triggerAB.bEvent', message: '请选择B事件' })
+  if (!ab.bEvents?.length || ab.bEvents.every(e => !e.eventName)) errors.push({ field: 'triggerAB.bEvents', message: '请至少添加一个B事件' })
   if (!ab.timeWindow) errors.push({ field: 'triggerAB.timeWindow', message: '请配置时间窗口' })
   return errors
 }
@@ -349,8 +355,8 @@ export function useTaskForm() {
       pushType: newType,
       scheduleOnce: initialState.scheduleOnce,
       scheduleRepeat: { ...initialState.scheduleRepeat },
-      triggerA: { ...initialState.triggerA, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { ...initialState.triggerA.frequency } },
-      triggerAB: { ...initialState.triggerAB, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { ...initialState.triggerAB.frequency } },
+      triggerA: { ...initialState.triggerA, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 } },
+      triggerAB: { ...initialState.triggerAB, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], bEvents: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 } },
       topic: '',
     }))
   }, [])
@@ -367,7 +373,7 @@ export function useTaskForm() {
           return { ...base, trigger_a: { start_date: state.triggerA.startDate, start_time: state.triggerA.startTime, end_date: state.triggerA.endDate, end_time: state.triggerA.endTime, events: state.triggerA.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: state.triggerA.eventLogic, global_filters: state.triggerA.globalFilters, delivery_timing: state.triggerA.deliveryTiming, delay_value: state.triggerA.delayValue, delay_unit: state.triggerA.delayUnit, frequency_enabled: state.triggerA.frequencyEnabled, frequency: state.triggerA.frequency } }
         case 'trigger_ab': {
           const ab = state.triggerAB
-          return { ...base, trigger_ab: { start_date: ab.startDate, start_time: ab.startTime, end_date: ab.endDate, end_time: ab.endTime, events: ab.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: ab.eventLogic, global_filters: ab.globalFilters, delivery_timing: ab.deliveryTiming, delay_value: ab.delayValue, delay_unit: ab.delayUnit, frequency_enabled: ab.frequencyEnabled, frequency: ab.frequency, b_event: ab.bEvent, time_window: ab.timeWindow, time_window_unit: ab.timeWindowUnit } }
+          return { ...base, trigger_ab: { start_date: ab.startDate, start_time: ab.startTime, end_date: ab.endDate, end_time: ab.endTime, events: ab.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: ab.eventLogic, global_filters: ab.globalFilters, delivery_timing: ab.deliveryTiming, delay_value: ab.delayValue, delay_unit: ab.delayUnit, frequency_enabled: ab.frequencyEnabled, frequency: ab.frequency, b_events: ab.bEvents?.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), b_event_logic: ab.bEventLogic, time_window: ab.timeWindow, time_window_unit: ab.timeWindowUnit } }
         }
         case 'topic':
           return { ...base, topic: state.topic }

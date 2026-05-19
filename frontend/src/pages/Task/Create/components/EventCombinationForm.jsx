@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Button, Select, InputNumber, Space, Typography } from 'antd'
+
+const TIME_WINDOW_UNIT_OPTIONS = [
+  { label: '自然日', value: 'natural_day' },
+  { label: '自然周', value: 'natural_week' },
+  { label: '自然月', value: 'natural_month' },
+]
 import { PlusOutlined, DeleteOutlined, CaretUpOutlined } from '@ant-design/icons'
 import { getEvents } from '../api'
 
@@ -101,7 +107,7 @@ function FilterRow({ filter, onChange, onRemove, fieldOptions }) {
   )
 }
 
-function EventRow({ event, eventOptions, fieldOptions, canDelete, onChange, onRemove, onAddFilter, onFilterChange, onRemoveFilter, onFilterLogicToggle }) {
+function EventRow({ event, eventOptions, fieldOptions, canDelete, simple, onChange, onRemove, onAddFilter, onFilterChange, onRemoveFilter, onFilterLogicToggle }) {
   const filterLogic = event.filters[0]?.logic || 'and'
   return (
     <div style={{ padding: '10px 16px' }}>
@@ -114,25 +120,29 @@ function EventRow({ event, eventOptions, fieldOptions, canDelete, onChange, onRe
           options={eventOptions}
           showSearch
         />
-        <Select
-          value={event.countType}
-          onChange={(val) => onChange('countType', val)}
-          style={{ width: 100 }}
-          options={COUNT_TYPE_OPTIONS}
-        />
-        <Select
-          value={event.countOperator}
-          onChange={(val) => onChange('countOperator', val)}
-          style={{ width: 110 }}
-          options={COUNT_OPERATOR_OPTIONS}
-        />
-        <InputNumber
-          min={1}
-          value={event.countValue}
-          onChange={(val) => onChange('countValue', val)}
-          style={{ width: 70 }}
-        />
-        <Text style={{ color: '#595959' }}>次</Text>
+        {!simple && (
+          <>
+            <Select
+              value={event.countType}
+              onChange={(val) => onChange('countType', val)}
+              style={{ width: 100 }}
+              options={COUNT_TYPE_OPTIONS}
+            />
+            <Select
+              value={event.countOperator}
+              onChange={(val) => onChange('countOperator', val)}
+              style={{ width: 110 }}
+              options={COUNT_OPERATOR_OPTIONS}
+            />
+            <InputNumber
+              min={1}
+              value={event.countValue}
+              onChange={(val) => onChange('countValue', val)}
+              style={{ width: 70 }}
+            />
+            <Text style={{ color: '#595959' }}>次</Text>
+          </>
+        )}
         <Button type="link" size="small" style={{ padding: 0 }} onClick={onAddFilter}>
           + 筛选
         </Button>
@@ -168,7 +178,7 @@ function EventRow({ event, eventOptions, fieldOptions, canDelete, onChange, onRe
   )
 }
 
-function EventCombinationForm({ eventItems, eventLogic = 'and', onUpdate, stateKey }) {
+function EventCombinationForm({ eventItems, eventLogic = 'and', eventTimeWindow = 1, eventTimeWindowUnit = 'natural_day', simple = false, hideTimeWindow = false, title = '完成以下事件', onUpdate, stateKey }) {
   const [eventOptions, setEventOptions] = useState([])
   const [fieldOptions, setFieldOptions] = useState([])
 
@@ -241,19 +251,40 @@ function EventCombinationForm({ eventItems, eventLogic = 'and', onUpdate, stateK
         padding: '10px 16px',
         borderBottom: '1px solid #f0f0f0',
         background: '#fafafa',
+        flexWrap: 'wrap',
+        gap: 8,
       }}>
-        <Space size={6}>
+        <Space size={6} wrap>
           <CaretUpOutlined style={{ color: '#8c8c8c', fontSize: 12 }} />
-          <Text strong style={{ fontSize: 13 }}>完成以下事件</Text>
+          <Text strong style={{ fontSize: 13 }}>{title}</Text>
+          {!hideTimeWindow && eventItems.length > 1 && eventLogic === 'and' && (
+            <Space size={6}>
+              <Text style={{ color: '#8c8c8c', fontSize: 13, fontWeight: 'normal' }}>全部事件在</Text>
+              <InputNumber
+                min={1}
+                value={eventTimeWindow}
+                onChange={(val) => onUpdate(`${stateKey}.eventTimeWindow`, val || 1)}
+                style={{ width: 70 }}
+                size="small"
+              />
+              <Select
+                value={eventTimeWindowUnit}
+                onChange={(val) => onUpdate(`${stateKey}.eventTimeWindowUnit`, val)}
+                options={TIME_WINDOW_UNIT_OPTIONS}
+                style={{ width: 100 }}
+                size="small"
+              />
+              <Text style={{ color: '#8c8c8c', fontSize: 13, fontWeight: 'normal' }}>时间范围内完成</Text>
+            </Space>
+          )}
         </Space>
         <Button type="link" size="small" icon={<PlusOutlined />} onClick={handleAddEvent} style={{ padding: 0 }}>
           添加事件
         </Button>
       </div>
 
-      {/* Event rows connected by a single vertical line */}
+      {/* Event rows */}
       <div style={{
-        borderBottom: '1px solid #f0f0f0',
         position: 'relative',
         paddingLeft: eventItems.length > 1 ? 40 : 0,
       }}>
@@ -270,6 +301,7 @@ function EventCombinationForm({ eventItems, eventLogic = 'and', onUpdate, stateK
             eventOptions={eventOptions}
             fieldOptions={fieldOptions}
             canDelete={eventItems.length > 1}
+            simple={simple}
             onChange={(field, value) => handleEventChange(event.id, field, value)}
             onRemove={() => handleRemoveEvent(event.id)}
             onAddFilter={() => handleAddFilter(event.id)}
@@ -278,17 +310,6 @@ function EventCombinationForm({ eventItems, eventLogic = 'and', onUpdate, stateK
             onFilterLogicToggle={() => handleFilterLogicToggle(event.id)}
           />
         ))}
-      </div>
-
-
-      {/* Footer */}
-      <div style={{
-        padding: '8px 16px',
-        borderTop: '1px solid #f0f0f0',
-        color: '#8c8c8c',
-        fontSize: 13,
-      }}>
-        在计划起止时间内完成后
       </div>
     </div>
   )
