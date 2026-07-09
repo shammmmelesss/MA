@@ -33,22 +33,13 @@ import SystemConfig from './pages/System/Config.jsx'
 // 路由配置
 const router = createBrowserRouter([
   {
-    path: '/tasks/create',
-    element: <CreatePushTask />,
-  },
-  {
-    path: '/content-templates/create',
-    element: <ContentTemplateEdit />,
-  },
-  {
-    path: '/content-templates/:id/edit',
-    element: <ContentTemplateEdit />,
-  },
-  {
     path: '/',
     element: <App />,
     children: [
       { path: '', element: <DashboardPage /> },
+      { path: 'tasks/create', element: <CreatePushTask /> },
+      { path: 'content-templates/create', element: <ContentTemplateEdit /> },
+      { path: 'content-templates/:id/edit', element: <ContentTemplateEdit /> },
       // 项目空间模块
       { path: 'projects/list', element: <ProjectList /> },
       // App接入模块

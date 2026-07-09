@@ -249,6 +249,7 @@ func main() {
 			topics.POST("/:key/subscribe", topicHandler.Subscribe)
 			topics.POST("/:key/unsubscribe", topicHandler.Unsubscribe)
 			topics.GET("/subscriptions", topicHandler.GetUserSubscriptions)
+			topics.GET("/subscribers", topicHandler.GetTopicSubscribers)
 
 			// 执行个性化推送（调试）
 			topics.POST("/:key/push", topicHandler.ExecuteTopicPush)

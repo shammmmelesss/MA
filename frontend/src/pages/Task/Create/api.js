@@ -32,8 +32,8 @@ export async function estimateUsers(params) {
   return res.data
 }
 
-export async function getTopics() {
-  const res = await axios.get(`${BASE}/topics`)
+export async function getTopics(projectId) {
+  const res = await axios.get('/api/v1/topics', { params: { project_id: projectId, page: 1, page_size: 100 } })
   return res.data
 }
 

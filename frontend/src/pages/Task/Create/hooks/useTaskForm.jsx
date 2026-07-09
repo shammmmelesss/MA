@@ -64,8 +64,6 @@ const initialState = {
     timeWindowUnit: 'hours',
   },
   topic: '',
-  topicPersonalized: false,
-  topicBuckets: [],
 
   // 步骤2: 目标用户
   attributeFilters: [],
@@ -360,8 +358,6 @@ export function useTaskForm() {
       triggerA: { ...initialState.triggerA, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 } },
       triggerAB: { ...initialState.triggerAB, events: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], bEvents: [{ id: generateId(), eventName: '', countType: 'total_count', countOperator: '>=', countValue: 1, filters: [] }], globalFilters: [], frequency: { naturalDays: 1, maxCount: 1, intervalMinutes: 0 } },
       topic: '',
-      topicPersonalized: false,
-      topicBuckets: [],
     }))
   }, [])
 
@@ -379,25 +375,8 @@ export function useTaskForm() {
           const ab = state.triggerAB
           return { ...base, trigger_ab: { start_date: ab.startDate, start_time: ab.startTime, end_date: ab.endDate, end_time: ab.endTime, events: ab.events.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), event_logic: ab.eventLogic, global_filters: ab.globalFilters, delivery_timing: ab.deliveryTiming, delay_value: ab.delayValue, delay_unit: ab.delayUnit, frequency_enabled: ab.frequencyEnabled, frequency: ab.frequency, b_events: ab.bEvents?.map(e => ({ event_name: e.eventName, count_type: e.countType, count_operator: e.countOperator, count_value: e.countValue, filters: e.filters })), b_event_logic: ab.bEventLogic, time_window: ab.timeWindow, time_window_unit: ab.timeWindowUnit } }
         }
-        case 'topic': {
-          const topicPayload = { ...base, topic: state.topic }
-          if (state.topicPersonalized && state.topicBuckets.length > 0) {
-            topicPayload.personalization = true
-            topicPayload.content_buckets = state.topicBuckets.map((b, idx) => ({
-              bucket_id: b.bucket_id,
-              label: b.label,
-              priority: idx + 1,
-              user_filters: (b.user_filters || []).map(f => ({
-                field: f.field,
-                operator: f.operator,
-                value: f.value || '',
-                logic: f.logic || 'and',
-              })),
-              content: { title: b.content?.title || '', body: b.content?.body || '' },
-            }))
-          }
-          return topicPayload
-        }
+        case 'topic':
+          return { ...base, topic: state.topic }
         default:
           return base
       }

@@ -176,6 +176,26 @@ func (h *topicHandler) GetUserSubscriptions(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"topics": topics})
 }
 
+// GetTopicSubscribers GET /api/v1/topics/subscribers?project_id=&topic_key=
+func (h *topicHandler) GetTopicSubscribers(c *gin.Context) {
+	topicKey := c.Query("topic_key")
+	if topicKey == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "topic_key is required"})
+		return
+	}
+	projectID, err := strconv.ParseInt(c.Query("project_id"), 10, 64)
+	if err != nil || projectID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "project_id is required"})
+		return
+	}
+	accountIDs, err := h.topicService.GetTopicSubscribers(projectID, topicKey)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"account_ids": accountIDs, "total": len(accountIDs)})
+}
+
 // ExecuteTopicPush POST /api/v1/topics/:key/push
 // 供调试/测试发送使用，返回每个订阅用户匹配的桶和最终消息内容
 func (h *topicHandler) ExecuteTopicPush(c *gin.Context) {

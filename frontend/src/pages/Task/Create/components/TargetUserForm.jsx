@@ -82,6 +82,7 @@ function TargetUserForm() {
     addChildFilter, removeChildFilter, updateTargetUser,
   } = useTaskFormContext()
   const { attributeFilters } = state
+  const isTopicMode = state.pushType === 'topic'
 
   const [estimatedCount, setEstimatedCount] = useState(null)
   const [estimating, setEstimating] = useState(false)
@@ -174,7 +175,12 @@ function TargetUserForm() {
   }
 
   return (
-    <div style={{ fontSize: 14 }}>
+    <div style={{ fontSize: 14, opacity: isTopicMode ? 0.4 : 1, pointerEvents: isTopicMode ? 'none' : 'auto' }}>
+      {isTopicMode && (
+        <Text type="secondary" style={{ display: 'block', marginBottom: 12, fontSize: 13 }}>
+          Topic 模式下目标用户由订阅关系决定，无需配置
+        </Text>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
         <label style={{ fontSize: 14, color: '#262626', fontWeight: 'normal' }}>用户属性</label>
         <Text

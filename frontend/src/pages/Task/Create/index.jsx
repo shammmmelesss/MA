@@ -134,8 +134,6 @@ function CreatePushTaskInner() {
             background: '#fff',
             borderRadius: 8,
             padding: '32px 40px',
-            maxWidth: 1200,
-            margin: '0 auto',
           }}>
             <div id="push-timing">
               <h2 style={{ marginBottom: 16, fontSize: 20, fontWeight: 600, color: '#262626' }}>推送时机</h2>
