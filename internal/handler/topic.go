@@ -20,6 +20,7 @@ type TopicHandler interface {
 	Subscribe(c *gin.Context)
 	Unsubscribe(c *gin.Context)
 	GetUserSubscriptions(c *gin.Context)
+	GetTopicSubscribers(c *gin.Context)
 
 	ExecuteTopicPush(c *gin.Context)
 }

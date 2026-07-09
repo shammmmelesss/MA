@@ -23,6 +23,7 @@ type TopicService interface {
 	Subscribe(projectID int64, topicKey, accountID string) error
 	Unsubscribe(projectID int64, topicKey, accountID string) error
 	GetUserSubscriptions(projectID int64, accountID string) ([]*model.TopicDefinition, error)
+	GetTopicSubscribers(projectID int64, topicKey string) ([]string, error)
 
 	// ExecuteTopicPush 执行 topic 个性化推送，返回每个账户命中的桶 ID（用于测试发送调试）
 	ExecuteTopicPush(projectID int64, topicKey string, buckets []ContentBucket) ([]PushResult, error)
@@ -118,6 +119,14 @@ func (s *topicService) Unsubscribe(projectID int64, topicKey, accountID string) 
 
 func (s *topicService) GetUserSubscriptions(projectID int64, accountID string) ([]*model.TopicDefinition, error) {
 	return s.topicRepo.GetUserSubscriptions(projectID, accountID)
+}
+
+func (s *topicService) GetTopicSubscribers(projectID int64, topicKey string) ([]string, error) {
+	topic, err := s.topicRepo.GetByKey(projectID, topicKey)
+	if err != nil {
+		return nil, err
+	}
+	return s.topicRepo.GetSubscribers(projectID, topic.ID)
 }
 
 // ExecuteTopicPush 遍历订阅用户，按分桶优先级匹配内容并插值变量

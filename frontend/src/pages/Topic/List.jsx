@@ -23,11 +23,11 @@ const TopicList = () => {
   const [form] = Form.useForm()
 
   const fetchTopics = async () => {
-    if (!currentProject) return
+    if (!currentProject?.project_id) return
     setLoading(true)
     try {
       const res = await axios.get(BASE, {
-        params: { project_id: currentProject.id, page, page_size: pageSize },
+        params: { project_id: currentProject.project_id, page, page_size: pageSize },
       })
       setTopics(res.data.topics || [])
       setTotal(res.data.total || 0)
@@ -56,10 +56,10 @@ const TopicList = () => {
     const values = await form.validateFields()
     try {
       if (editingTopic) {
-        await axios.put(`${BASE}/${editingTopic.id}`, { ...values, project_id: currentProject.id })
+        await axios.put(`${BASE}/${editingTopic.id}`, { ...values, project_id: currentProject.project_id })
         message.success('更新成功')
       } else {
-        await axios.post(BASE, { ...values, project_id: currentProject.id })
+        await axios.post(BASE, { ...values, project_id: currentProject.project_id })
         message.success('创建成功')
       }
       setModalOpen(false)
