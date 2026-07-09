@@ -8,6 +8,7 @@ import (
 // PlayerRepository 玩家仓库接口
 type PlayerRepository interface {
 	GetPlayerByID(playerID int64) (*model.PlayerBase, error)
+	GetPlayerByAccountID(projectID int64, accountID string) (*model.PlayerBase, error)
 	CreatePlayer(player *model.PlayerBase) error
 	UpdatePlayer(player *model.PlayerBase) error
 	GetPlayersByIDs(playerIDs []int64) ([]*model.PlayerBase, error)
@@ -28,6 +29,16 @@ func NewPlayerRepository(db *gorm.DB) PlayerRepository {
 func (r *playerRepository) GetPlayerByID(playerID int64) (*model.PlayerBase, error) {
 	var player model.PlayerBase
 	result := r.db.First(&player, playerID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &player, nil
+}
+
+// GetPlayerByAccountID 根据 account_id 获取玩家信息
+func (r *playerRepository) GetPlayerByAccountID(projectID int64, accountID string) (*model.PlayerBase, error) {
+	var player model.PlayerBase
+	result := r.db.Where("project_id = ? AND account_id = ?", projectID, accountID).First(&player)
 	if result.Error != nil {
 		return nil, result.Error
 	}

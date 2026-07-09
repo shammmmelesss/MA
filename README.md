@@ -71,31 +71,25 @@ Documents/trae_projects/MA_v1/
 - Node.js 18+
 - PostgreSQL 16+
 
-### 后端启动
+### 一键启动（两个终端分别执行）
+
+**终端 1 — 后端**
 
 ```bash
-cd Documents/trae_projects/MA_v1
-
-# 配置环境变量（可选，有默认值）
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_NAME=game_marketing
-export SERVER_PORT=8080
-
-# 启动服务
+cd /Users/mac/project_dev/push_new
 go run main.go
 ```
 
-### 前端启动
+**终端 2 — 前端**
 
 ```bash
-cd Documents/trae_projects/MA_v1/frontend
-
-npm install
+cd /Users/mac/project_dev/push_new/frontend
+npm install   # 首次需要
 npm run dev
 ```
 
-前端默认运行在 `http://localhost:3000`，API 请求自动代理到后端 `http://localhost:8080`。
+- 后端：`http://localhost:8080`
+- 前端：`http://localhost:3000`（API 请求自动代理到后端）
 
 ## 环境变量
 

@@ -10,6 +10,7 @@ const PlayerManagement = () => <div>玩家管理页面</div>
 import TagList from './pages/Tag/List.jsx'
 const SegmentManagement = () => <div>分群管理页面</div>
 import UserAttributeList from './pages/UserAttribute/List.jsx'
+import TopicList from './pages/Topic/List.jsx'
 import EventManagementList from './pages/EventManagement/List.jsx'
 const CampaignList = () => <div>活动列表页面</div>
 const CreateCampaign = () => <div>创建活动页面</div>
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
       { path: 'profile/tags', element: <TagList /> },
       { path: 'profile/segments', element: <SegmentManagement /> },
       { path: 'profile/attributes', element: <UserAttributeList /> },
+      { path: 'channels/topics', element: <TopicList /> },
       { path: 'profile/events', element: <EventManagementList /> },
       // 营销活动模块
       { path: 'campaigns/list', element: <CampaignList /> },

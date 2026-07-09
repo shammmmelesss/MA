@@ -35,6 +35,7 @@ func main() {
 	projectRepo := repository.NewProjectRepository(db.GetDB())
 	appRepo := repository.NewAppRepository(db.GetDB())
 	pushTaskRepo := repository.NewPushTaskRepository(db.GetDB())
+	topicRepo := repository.NewTopicRepository(db.GetDB())
 
 	// 初始化服务层
 	playerService := service.NewPlayerService(playerRepo, tagRepo)
@@ -44,6 +45,7 @@ func main() {
 	appService := service.NewAppService(appRepo)
 	tagService := service.NewTagService(tagRepo, playerRepo)
 	pushTaskService := service.NewPushTaskService(pushTaskRepo)
+	topicService := service.NewTopicService(topicRepo, playerRepo)
 
 	// 初始化处理器层
 	playerHandler := handler.NewPlayerHandler(playerService)
@@ -52,7 +54,8 @@ func main() {
 	projectHandler := handler.NewProjectHandler(projectService)
 	appHandler := handler.NewAppHandler(appService)
 	tagHandler := handler.NewTagHandler(tagService)
-	pushTaskHandler := handler.NewPushTaskHandler(pushTaskService)
+	pushTaskHandler := handler.NewPushTaskHandler(pushTaskService, topicService)
+	topicHandler := handler.NewTopicHandler(topicService)
 
 	r := gin.Default()
 
@@ -231,6 +234,24 @@ func main() {
 			pushTasks.GET("/events", pushTaskHandler.GetEvents)
 			pushTasks.GET("/templates", pushTaskHandler.GetTemplates)
 			pushTasks.POST("/test-send", pushTaskHandler.TestSend)
+		}
+
+		// Topic 管理路由
+		topics := api.Group("/topics")
+		{
+			topics.POST("", topicHandler.CreateTopic)
+			topics.GET("", topicHandler.ListTopics)
+			topics.GET("/:id", topicHandler.GetTopic)
+			topics.PUT("/:id", topicHandler.UpdateTopic)
+			topics.DELETE("/:id", topicHandler.DeleteTopic)
+
+			// 订阅管理（:key 为 topic_key）
+			topics.POST("/:key/subscribe", topicHandler.Subscribe)
+			topics.POST("/:key/unsubscribe", topicHandler.Unsubscribe)
+			topics.GET("/subscriptions", topicHandler.GetUserSubscriptions)
+
+			// 执行个性化推送（调试）
+			topics.POST("/:key/push", topicHandler.ExecuteTopicPush)
 		}
 	}
 

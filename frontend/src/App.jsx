@@ -188,10 +188,11 @@ function App() {
             />
             {!collapsed && '营销平台'}
           </div>
-            <Menu 
-              theme="light" 
-              mode="inline" 
-              selectedKeys={[location.pathname]} 
+            <Menu
+              theme="light"
+              mode="inline"
+              selectedKeys={[location.pathname]}
+              defaultOpenKeys={['/analytics', '/campaigns', '/profile', '/channels', '/system']}
               items={menuItems}
               onClick={handleMenuClick}
             />

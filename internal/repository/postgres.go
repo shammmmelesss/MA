@@ -52,6 +52,8 @@ func NewPostgresDB(cfg config.DatabaseConfig) (*PostgresDB, error) {
 		&model.DeviceInfo{},
 		&model.AuthLog{},
 		&model.PushTask{},
+		&model.TopicDefinition{},
+		&model.TopicSubscription{},
 	)
 	if err != nil {
 		return nil, err

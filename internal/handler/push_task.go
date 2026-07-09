@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 // PushTaskHandler 推送任务处理器接口
 type PushTaskHandler interface {
 	CreateTask(c *gin.Context)
@@ -27,12 +28,14 @@ type PushTaskHandler interface {
 // pushTaskHandler 推送任务处理器实现
 type pushTaskHandler struct {
 	pushTaskService service.PushTaskService
+	topicService    service.TopicService
 }
 
 // NewPushTaskHandler 创建推送任务处理器实例
-func NewPushTaskHandler(pushTaskService service.PushTaskService) PushTaskHandler {
+func NewPushTaskHandler(pushTaskService service.PushTaskService, topicService service.TopicService) PushTaskHandler {
 	return &pushTaskHandler{
 		pushTaskService: pushTaskService,
+		topicService:    topicService,
 	}
 }
 
@@ -180,13 +183,18 @@ func (h *pushTaskHandler) EstimateUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"estimated_count": count})
 }
 
-// GetTopics 获取可用 topic 列表（模拟数据）
+// GetTopics 获取可用 topic 列表（查 DB）
 func (h *pushTaskHandler) GetTopics(c *gin.Context) {
-	topics := []gin.H{
-		{"id": "news", "name": "新闻资讯"},
-		{"id": "promotion", "name": "活动推广"},
-		{"id": "update", "name": "版本更新"},
-		{"id": "event", "name": "游戏活动"},
+	projectIDStr := c.Query("project_id")
+	projectID, _ := strconv.ParseInt(projectIDStr, 10, 64)
+	if projectID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "project_id is required"})
+		return
+	}
+	topics, _, err := h.topicService.ListTopics(projectID, 1, 200)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"topics": topics})
 }
