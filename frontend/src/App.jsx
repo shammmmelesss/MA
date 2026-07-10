@@ -131,6 +131,7 @@ function App() {
       label: '素材管理',
       children: [
         { key: '/channels/topics', label: 'Topic管理' },
+        { key: '/channels/subscriptions', label: '订阅管理' },
         { key: '/channels/config', label: '内容模板' },
         { key: '/channels/content', label: '视频管理' },
         { key: '/channels/url', label: 'URL管理' },

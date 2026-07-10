@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect } from 'react'
-import { Radio, Select, Input, Button, Upload, Popover, Space, Typography, Tooltip, message } from 'antd'
+import { useRef, useState, useEffect, useContext } from 'react'
+import { Radio, Select, Input, InputNumber, Button, Upload, Popover, Space, Typography, Tooltip, message } from 'antd'
 import { PlusOutlined, DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useTaskFormContext } from '../hooks/useTaskForm'
-import { getTemplates } from '../api'
+import { getTemplates, getImageGroups } from '../api'
+import { ProjectContext } from '../../../../App.jsx'
 import PreviewCard from './PreviewCard'
 import MultiLangDrawer from './MultiLangDrawer'
 
@@ -61,7 +62,9 @@ function InsertParamButton({ inputRef, onInsert }) {
 /* ── Main form ── */
 function PushConfigForm() {
   const { state, updatePushConfig, updatePushState } = useTaskFormContext()
+  const { currentProject } = useContext(ProjectContext) || {}
   const [templates, setTemplates] = useState([])
+  const [imageGroups, setImageGroups] = useState([])
   const [touched, setTouched] = useState({ clickLink: false })
   const titleRef = useRef(null)
   const contentRef = useRef(null)
@@ -78,6 +81,13 @@ function PushConfigForm() {
     }).catch(() => message.error('获取模板列表失败'))
   }, [])
 
+  useEffect(() => {
+    if (!currentProject?.project_id) return
+    getImageGroups(currentProject.project_id, 'large')
+      .then(data => setImageGroups(data?.list || []))
+      .catch(() => setImageGroups([]))
+  }, [currentProject])
+
   const ps = state.pushStates[0] || {}
   const isTemplate = ps.contentFillMode === 'template'
   const titleError = !isTemplate && fieldTouched.notificationTitle && !ps.notificationTitle
@@ -89,6 +99,15 @@ function PushConfigForm() {
     if (file.size > 300 * 1024) { message.error('图片大小不能超过 300KB'); return Upload.LIST_IGNORE }
     const url = URL.createObjectURL(file)
     updatePushState(ps.id, 'notificationImage', { type: 'custom', url })
+    return false
+  }
+
+  const handleExpandImageUpload = (file) => {
+    const ok = file.type === 'image/jpeg' || file.type === 'image/png'
+    if (!ok) { message.error('仅支持 jpg/png 格式'); return Upload.LIST_IGNORE }
+    if (file.size > 1024 * 1024) { message.error('图片大小不能超过 1MB'); return Upload.LIST_IGNORE }
+    const url = URL.createObjectURL(file)
+    updatePushConfig('style.expandImageUrl', url)
     return false
   }
 
@@ -174,7 +193,7 @@ function PushConfigForm() {
               }}
               options={[
                 { label: '自定义', value: 'custom' },
-                { label: '图片随材', value: 'material' },
+                { label: '列表随机', value: 'material' },
                 { label: '无', value: 'none' },
               ]} />
 
@@ -251,11 +270,76 @@ function PushConfigForm() {
         {/* 展开式通知 */}
         <div style={{ marginBottom: 24 }}>
           <label style={{ display: 'block', fontSize: 14, color: '#262626' }}>展开式通知</label>
-          <div style={{ marginTop: 10 }}>
-            <Radio.Group value={state.style.expandType} onChange={e => updatePushConfig('style.expandType', e.target.value)}
-              style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px' }}>
-              {EXPAND_OPTIONS.map(o => <Radio key={o.value} value={o.value}>{o.label}</Radio>)}
-            </Radio.Group>
+          <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <Select
+              value={state.style.expandType}
+              onChange={val => {
+                updatePushConfig('style.expandType', val)
+                updatePushConfig('style.expandImageMode', undefined)
+                updatePushConfig('style.expandImageUrl', undefined)
+                updatePushConfig('style.expandImageGroupId', undefined)
+                updatePushConfig('style.expandImageOffset', undefined)
+              }}
+              style={{ width: 160 }}
+              options={EXPAND_OPTIONS}
+            />
+            {state.style.expandType === 'large_image' && (
+              <Select
+                value={state.style.expandImageMode || 'random'}
+                onChange={val => {
+                  updatePushConfig('style.expandImageMode', val)
+                  updatePushConfig('style.expandImageUrl', undefined)
+                  updatePushConfig('style.expandImageGroupId', undefined)
+                  updatePushConfig('style.expandImageOffset', undefined)
+                }}
+                style={{ width: 160 }}
+                options={[
+                  { label: '列表随机', value: 'random' },
+                  { label: '顺序发送', value: 'date_map' },
+                  { label: '自定义', value: 'custom' },
+                ]}
+              />
+            )}
+            {state.style.expandType === 'large_image' &&
+              (state.style.expandImageMode === 'random' || state.style.expandImageMode === 'date_map') && (
+              <Select
+                value={state.style.expandImageGroupId}
+                onChange={val => updatePushConfig('style.expandImageGroupId', val)}
+                style={{ width: 200 }}
+                placeholder="选择图片组"
+                options={imageGroups.map(g => ({ label: g.name, value: g.id }))}
+                notFoundContent="暂无图片组"
+              />
+            )}
+            {state.style.expandType === 'large_image' && state.style.expandImageMode === 'date_map' && (
+              <Space size={4}>
+                <Tooltip title="从图片组的第几张开始顺序发送">
+                  <span style={{ fontSize: 14, color: '#595959' }}>偏移量</span>
+                </Tooltip>
+                <InputNumber
+                  min={0}
+                  step={1}
+                  precision={0}
+                  value={state.style.expandImageOffset ?? 0}
+                  onChange={val => updatePushConfig('style.expandImageOffset', val ?? 0)}
+                  style={{ width: 100 }}
+                />
+              </Space>
+            )}
+            {state.style.expandType === 'large_image' && state.style.expandImageMode === 'custom' && (
+              <Upload
+                beforeUpload={handleExpandImageUpload}
+                showUploadList={false}
+                accept=".jpg,.jpeg,.png"
+              >
+                <Button type="link" size="small" style={{ paddingLeft: 0 }}>
+                  {state.style.expandImageUrl ? '重新上传' : '上传图片'}
+                </Button>
+              </Upload>
+            )}
+            {state.style.expandType === 'large_image' && state.style.expandImageMode === 'custom' && state.style.expandImageUrl && (
+              <img src={state.style.expandImageUrl} alt="大图预览" style={{ height: 32, borderRadius: 4, border: '1px solid #d9d9d9' }} />
+            )}
           </div>
         </div>
 

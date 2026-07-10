@@ -51,3 +51,10 @@ export async function testSend(data) {
   const res = await axios.post(`${BASE}/test-send`, data)
   return res.data
 }
+
+export async function getImageGroups(projectId, imageType) {
+  const res = await axios.get('/api/v1/image-groups', {
+    params: { project_id: projectId, image_type: imageType || undefined, status: 'enabled', page: 1, page_size: 100 },
+  })
+  return res.data
+}

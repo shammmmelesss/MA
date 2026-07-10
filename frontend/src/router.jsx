@@ -11,6 +11,7 @@ import TagList from './pages/Tag/List.jsx'
 const SegmentManagement = () => <div>分群管理页面</div>
 import UserAttributeList from './pages/UserAttribute/List.jsx'
 import TopicList from './pages/Topic/List.jsx'
+import SubscriptionList from './pages/Subscription/List.jsx'
 import EventManagementList from './pages/EventManagement/List.jsx'
 const CampaignList = () => <div>活动列表页面</div>
 const CreateCampaign = () => <div>创建活动页面</div>
@@ -29,15 +30,17 @@ const Reports = () => <div>数据报告页面</div>
 const SmartContent = () => <div>智能内容页面</div>
 const SmartAudience = () => <div>智能人群页面</div>
 import SystemConfig from './pages/System/Config.jsx'
+import ImageAssetList from './pages/ImageAsset/List.jsx'
 
 // 路由配置
 const router = createBrowserRouter([
+  // 全屏页面：自带顶栏和步骤侧边栏，不套用 App 的外层容器
+  { path: '/tasks/create', element: <CreatePushTask /> },
   {
     path: '/',
     element: <App />,
     children: [
       { path: '', element: <DashboardPage /> },
-      { path: 'tasks/create', element: <CreatePushTask /> },
       { path: 'content-templates/create', element: <ContentTemplateEdit /> },
       { path: 'content-templates/:id/edit', element: <ContentTemplateEdit /> },
       // 项目空间模块
@@ -50,6 +53,7 @@ const router = createBrowserRouter([
       { path: 'profile/segments', element: <SegmentManagement /> },
       { path: 'profile/attributes', element: <UserAttributeList /> },
       { path: 'channels/topics', element: <TopicList /> },
+      { path: 'channels/subscriptions', element: <SubscriptionList /> },
       { path: 'profile/events', element: <EventManagementList /> },
       // 营销活动模块
       { path: 'campaigns/list', element: <CampaignList /> },
@@ -60,7 +64,7 @@ const router = createBrowserRouter([
       { path: 'channels/config', element: <ContentTemplateList /> },
       { path: 'channels/content', element: <ContentManagement /> },
       { path: 'channels/url', element: <div>URL管理页面</div> },
-      { path: 'channels/image', element: <div>图片素材页面</div> },
+      { path: 'channels/image', element: <ImageAssetList /> },
       { path: 'channels/audio', element: <div>音频管理页面</div> },
 
 

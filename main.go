@@ -36,6 +36,8 @@ func main() {
 	appRepo := repository.NewAppRepository(db.GetDB())
 	pushTaskRepo := repository.NewPushTaskRepository(db.GetDB())
 	topicRepo := repository.NewTopicRepository(db.GetDB())
+	subscriptionRepo := repository.NewSubscriptionRepository(db.GetDB())
+	imageGroupRepo := repository.NewImageGroupRepository(db.GetDB())
 
 	// 初始化服务层
 	playerService := service.NewPlayerService(playerRepo, tagRepo)
@@ -46,6 +48,8 @@ func main() {
 	tagService := service.NewTagService(tagRepo, playerRepo)
 	pushTaskService := service.NewPushTaskService(pushTaskRepo)
 	topicService := service.NewTopicService(topicRepo, playerRepo)
+	subscriptionService := service.NewSubscriptionService(subscriptionRepo)
+	imageGroupService := service.NewImageGroupService(imageGroupRepo)
 
 	// 初始化处理器层
 	playerHandler := handler.NewPlayerHandler(playerService)
@@ -56,8 +60,11 @@ func main() {
 	tagHandler := handler.NewTagHandler(tagService)
 	pushTaskHandler := handler.NewPushTaskHandler(pushTaskService, topicService)
 	topicHandler := handler.NewTopicHandler(topicService)
+	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
+	imageGroupHandler := handler.NewImageGroupHandler(imageGroupService)
 
 	r := gin.Default()
+	r.Static("/uploads", "./uploads")
 
 	// 添加CORS中间件
 	r.Use(func(c *gin.Context) {
@@ -253,6 +260,27 @@ func main() {
 
 			// 执行个性化推送（调试）
 			topics.POST("/:key/push", topicHandler.ExecuteTopicPush)
+		}
+
+		// 订阅管理路由
+		subscriptions := api.Group("/subscriptions")
+		{
+			subscriptions.POST("", subscriptionHandler.CreateSubscription)
+			subscriptions.GET("", subscriptionHandler.ListSubscriptions)
+			subscriptions.GET("/:id", subscriptionHandler.GetSubscription)
+			subscriptions.PUT("/:id", subscriptionHandler.UpdateSubscription)
+			subscriptions.DELETE("/:id", subscriptionHandler.DeleteSubscription)
+		}
+
+		// 图片组路由
+		imageGroups := api.Group("/image-groups")
+		{
+			imageGroups.GET("", imageGroupHandler.ListImageGroups)
+			imageGroups.POST("", imageGroupHandler.CreateImageGroup)
+			imageGroups.GET("/:id", imageGroupHandler.GetImageGroup)
+			imageGroups.PUT("/:id", imageGroupHandler.UpdateImageGroup)
+			imageGroups.DELETE("/:id", imageGroupHandler.DeleteImageGroup)
+			imageGroups.POST("/upload-image", imageGroupHandler.UploadItemImage)
 		}
 	}
 
