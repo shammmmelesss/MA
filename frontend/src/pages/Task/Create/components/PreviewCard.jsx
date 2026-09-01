@@ -34,7 +34,13 @@ function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
       top: 24,
       alignSelf: 'flex-start',
     }}>
-      <Text strong style={{ display: 'block', marginBottom: 12 }}>预览</Text>
+      {/* Header: 预览 + 测试发送链接 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <Text strong>预览</Text>
+        <Button type="link" size="small" style={{ padding: 0 }} onClick={() => setModalOpen(true)}>
+          测试发送
+        </Button>
+      </div>
 
       {/* Phone frame */}
       <div style={{
@@ -132,14 +138,6 @@ function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
           )}
         </div>
       </div>
-
-      <Button
-        type="primary"
-        style={{ marginTop: 16, width: '100%' }}
-        onClick={() => setModalOpen(true)}
-      >
-        测试发送
-      </Button>
 
       <Modal
         title="测试发送"

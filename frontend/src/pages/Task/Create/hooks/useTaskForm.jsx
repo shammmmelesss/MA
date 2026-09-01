@@ -70,6 +70,7 @@ const initialState = {
 
   // 步骤3: 推送配置
   experimentType: 'none',
+  darkModeEnabled: false, // 是否启用深色模式独立配置
   pushStates: [
     {
       id: '1',
@@ -81,6 +82,16 @@ const initialState = {
       notificationContent: '',
       notificationImage: { type: 'custom', url: '', material: '' },
       i18nTexts: [],  // [{ lang: 'en', title: '', content: '' }, ...]
+      // 深色模式独立配置（浅色模式使用上面的顶层字段）
+      dark: {
+        contentFillMode: 'custom',
+        copywritingGroup: '',
+        sendRule: '',
+        notificationTitle: '',
+        notificationContent: '',
+        notificationImage: { type: 'custom', url: '', material: '' },
+        i18nTexts: [],
+      },
     },
   ],
   clickAction: 'open_app',
@@ -308,6 +319,15 @@ export function useTaskForm() {
           notificationContent: '',
           notificationImage: { type: 'custom', url: '', material: '' },
           i18nTexts: [],
+          dark: {
+            contentFillMode: 'custom',
+            copywritingGroup: '',
+            sendRule: '',
+            notificationTitle: '',
+            notificationContent: '',
+            notificationImage: { type: 'custom', url: '', material: '' },
+            i18nTexts: [],
+          },
         },
       ],
     }))
@@ -325,7 +345,7 @@ export function useTaskForm() {
       const source = prev.pushStates.find(s => s.id === stateId)
       if (!source) return prev
       const idx = prev.pushStates.findIndex(s => s.id === stateId)
-      const copy = { ...source, id: generateId(), notificationImage: { ...source.notificationImage }, i18nTexts: source.i18nTexts ? source.i18nTexts.map(t => ({ ...t })) : [] }
+      const copy = { ...source, id: generateId(), notificationImage: { ...source.notificationImage }, i18nTexts: source.i18nTexts ? source.i18nTexts.map(t => ({ ...t })) : [], dark: source.dark ? { ...source.dark, notificationImage: { ...source.dark.notificationImage }, i18nTexts: source.dark.i18nTexts ? source.dark.i18nTexts.map(t => ({ ...t })) : [] } : undefined }
       const next = [...prev.pushStates]
       next.splice(idx + 1, 0, copy)
       return { ...prev, pushStates: next }
@@ -338,6 +358,20 @@ export function useTaskForm() {
       pushStates: prev.pushStates.map(s =>
         s.id === stateId ? { ...s, [field]: value } : s
       ),
+    }))
+  }, [])
+
+  // 按模式更新推送状态字段：light -> 顶层字段，dark -> dark 子对象
+  const updatePushStateByMode = useCallback((stateId, mode, field, value) => {
+    setState(prev => ({
+      ...prev,
+      pushStates: prev.pushStates.map(s => {
+        if (s.id !== stateId) return s
+        if (mode === 'dark') {
+          return { ...s, dark: { ...s.dark, [field]: value } }
+        }
+        return { ...s, [field]: value }
+      }),
     }))
   }, [])
 
@@ -391,6 +425,7 @@ export function useTaskForm() {
       },
       push_content_config: {
         experiment_type: state.experimentType,
+        dark_mode_enabled: state.darkModeEnabled,
         states: state.pushStates.map(ps => ({
           content_fill_mode: ps.contentFillMode,
           template: ps.contentTemplate,
@@ -399,6 +434,14 @@ export function useTaskForm() {
           title: ps.notificationTitle,
           content: ps.notificationContent,
           image: ps.notificationImage.url ? ps.notificationImage : undefined,
+          dark: state.darkModeEnabled && ps.dark ? {
+            content_fill_mode: ps.dark.contentFillMode,
+            copywriting_group: ps.dark.copywritingGroup,
+            send_rule: ps.dark.sendRule,
+            title: ps.dark.notificationTitle,
+            content: ps.dark.notificationContent,
+            image: ps.dark.notificationImage?.url ? ps.dark.notificationImage : undefined,
+          } : undefined,
         })),
         click_action: state.clickAction,
         click_link: state.clickAction === 'open_link' ? state.clickLink : undefined,
@@ -425,6 +468,7 @@ export function useTaskForm() {
     removePushState,
     copyPushState,
     updatePushState,
+    updatePushStateByMode,
     validateCurrentStep,
     resetPushTypeFields,
     getSubmitPayload,

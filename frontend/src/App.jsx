@@ -160,39 +160,68 @@ function App() {
   }
 
   return (
-    <ConfigProvider locale={zhCN}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        components: {
+          Menu: {
+            // 白色侧边栏 —— 现代化配色
+            itemBg: 'transparent',
+            subMenuItemBg: 'transparent',
+            itemColor: 'rgba(0, 0, 0, 0.72)',
+            itemHoverColor: '#4f7cff',
+            itemHoverBg: 'rgba(79, 124, 255, 0.08)',
+            itemSelectedColor: '#ffffff',
+            itemSelectedBg: '#4f7cff',
+            itemBorderRadius: 10,
+            itemMarginInline: 10,
+            itemHeight: 42,
+            fontSize: 14,
+          },
+        },
+      }}
+    >
       <ProjectContext.Provider value={{ currentProject, setCurrentProject, projects, refreshProjects: fetchProjects }}>
         <Layout style={{ minHeight: '100vh' }}>
-          <Sider 
-            collapsible 
-            collapsed={collapsed} 
+          <Sider
+            collapsible
+            collapsed={collapsed}
             onCollapse={setCollapsed}
-            style={{ 
-              background: colorBgContainer,
+            width={232}
+            style={{
+              background: '#ffffff',
+              boxShadow: '2px 0 12px rgba(0, 0, 0, 0.06)',
+              borderInlineEnd: '1px solid #f0f0f0',
             }}
           >
-            <div style={{ 
-            height: 32, 
-            margin: 16, 
-            background: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: borderRadiusLG,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: '#1890ff'
-          }}>
-            <img 
-              src="https://img.icons8.com/color/48/000000/marketing.png" 
-              alt="Logo" 
-              style={{ height: 24, marginRight: collapsed ? 0 : 8 }} 
-            />
-            {!collapsed && '营销平台'}
-          </div>
+            <div style={{
+              height: 56,
+              margin: '16px 12px 20px',
+              padding: '0 12px',
+              background: 'rgba(79, 124, 255, 0.06)',
+              border: '1px solid rgba(79, 124, 255, 0.12)',
+              borderRadius: 12,
+              display: 'flex',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              alignItems: 'center',
+              fontSize: 17,
+              fontWeight: 600,
+              letterSpacing: 0.3,
+              color: '#1f2937',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+            }}>
+              <img
+                src="https://img.icons8.com/color/48/000000/marketing.png"
+                alt="Logo"
+                style={{ height: 26, marginRight: collapsed ? 0 : 10 }}
+              />
+              {!collapsed && '营销平台'}
+            </div>
             <Menu
               theme="light"
               mode="inline"
+              style={{ background: 'transparent', borderInlineEnd: 'none' }}
               selectedKeys={[location.pathname]}
               defaultOpenKeys={['/analytics', '/campaigns', '/profile', '/channels', '/system']}
               items={menuItems}

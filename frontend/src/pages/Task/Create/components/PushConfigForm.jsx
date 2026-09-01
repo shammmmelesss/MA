@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useContext } from 'react'
-import { Radio, Select, Input, InputNumber, Button, Upload, Popover, Space, Typography, Tooltip, message } from 'antd'
+import { Radio, Select, Input, InputNumber, Button, Upload, Popover, Space, Typography, Tooltip, Segmented, message } from 'antd'
 import { PlusOutlined, DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import { useTaskFormContext } from '../hooks/useTaskForm'
 import { getTemplates, getImageGroups } from '../api'
@@ -61,7 +61,8 @@ function InsertParamButton({ inputRef, onInsert }) {
 
 /* ── Main form ── */
 function PushConfigForm() {
-  const { state, updatePushConfig, updatePushState } = useTaskFormContext()
+  const { state, updatePushConfig, updatePushStateByMode } = useTaskFormContext()
+  const [themeMode, setThemeMode] = useState('light')
   const { currentProject } = useContext(ProjectContext) || {}
   const [templates, setTemplates] = useState([])
   const [imageGroups, setImageGroups] = useState([])
@@ -89,16 +90,19 @@ function PushConfigForm() {
   }, [currentProject])
 
   const ps = state.pushStates[0] || {}
-  const isTemplate = ps.contentFillMode === 'template'
-  const titleError = !isTemplate && fieldTouched.notificationTitle && !ps.notificationTitle
-  const contentError = !isTemplate && fieldTouched.notificationContent && !ps.notificationContent
+  // 当前模式下的内容配置：light -> 顶层字段，dark -> ps.dark
+  const md = themeMode === 'dark' ? (ps.dark || {}) : ps
+  const setField = (field, val) => updatePushStateByMode(ps.id, themeMode, field, val)
+  const isTemplate = md.contentFillMode === 'template'
+  const titleError = !isTemplate && fieldTouched[`${themeMode}.notificationTitle`] && !md.notificationTitle
+  const contentError = !isTemplate && fieldTouched[`${themeMode}.notificationContent`] && !md.notificationContent
 
   const handleImageUpload = (file) => {
     const ok = file.type === 'image/jpeg' || file.type === 'image/png'
     if (!ok) { message.error('仅支持 jpg/png 格式'); return Upload.LIST_IGNORE }
     if (file.size > 300 * 1024) { message.error('图片大小不能超过 300KB'); return Upload.LIST_IGNORE }
     const url = URL.createObjectURL(file)
-    updatePushState(ps.id, 'notificationImage', { type: 'custom', url })
+    setField('notificationImage', { type: 'custom', url })
     return false
   }
 
@@ -116,30 +120,40 @@ function PushConfigForm() {
       <div style={{ flex: 1, minWidth: 400, maxWidth: 700 }}>
         {/* 实验类型 */}
         <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: 14, color: '#262626' }}>实验类型</label>
-          <div style={{ marginTop: 10 }}>
-            <Radio.Group value={state.experimentType} onChange={e => updatePushConfig('experimentType', e.target.value)}>
-              <Radio value="none">非AB实验</Radio>
-              <Radio value="ab_planned" disabled>AB实验（规划）</Radio>
-            </Radio.Group>
-          </div>
+          <Radio.Group optionType="button" buttonStyle="outline"
+            value={state.experimentType} onChange={e => updatePushConfig('experimentType', e.target.value)}>
+            <Radio.Button value="none">非AB实验</Radio.Button>
+            <Radio.Button value="ab_planned" disabled>AB实验（规划）</Radio.Button>
+          </Radio.Group>
+        </div>
+
+        {/* 明暗模式切换 */}
+        <div style={{ marginBottom: 24 }}>
+          <Segmented
+            value={themeMode}
+            onChange={setThemeMode}
+            options={[
+              { label: '浅色模式', value: 'light' },
+              { label: '深色模式', value: 'dark' },
+            ]}
+          />
         </div>
 
         {/* 内容填充 */}
         <div style={{ marginBottom: 24 }}>
           <label style={{ display: 'block', fontSize: 14, color: '#262626' }}>内容填充</label>
           <div style={{ marginTop: 10 }}>
-            <Radio.Group value={ps.contentFillMode} onChange={e => updatePushState(ps.id, 'contentFillMode', e.target.value)}>
+            <Radio.Group value={md.contentFillMode} onChange={e => setField('contentFillMode', e.target.value)}>
               <Radio value="custom">自定义</Radio>
               <Radio value="template">内容模板</Radio>
             </Radio.Group>
-            {ps.contentFillMode === 'template' && (
+            {md.contentFillMode === 'template' && (
               <span style={{ display: 'inline-flex', gap: 8, marginLeft: 16 }}>
-                <Select style={{ width: 160 }} placeholder="选择文案组" value={ps.copywritingGroup || undefined}
-                  onChange={v => updatePushState(ps.id, 'copywritingGroup', v)}
+                <Select style={{ width: 160 }} placeholder="选择文案组" value={md.copywritingGroup || undefined}
+                  onChange={v => setField('copywritingGroup', v)}
                   options={templates.map(t => ({ label: t.name || t, value: t.id || t }))} allowClear />
-                <Select style={{ width: 160 }} placeholder="选择发送规则" value={ps.sendRule || undefined}
-                  onChange={v => updatePushState(ps.id, 'sendRule', v)}
+                <Select style={{ width: 160 }} placeholder="选择发送规则" value={md.sendRule || undefined}
+                  onChange={v => setField('sendRule', v)}
                   options={[
                     { label: '顺序发送', value: 'sequential' },
                     { label: '随机发送', value: 'random' },
@@ -156,13 +170,13 @@ function PushConfigForm() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ color: '#ff4d4f' }}>*</span>
               <Text style={{ fontSize: 14 }}>通知标题</Text>
-              <InsertParamButton inputRef={titleRef} onInsert={(val) => updatePushState(ps.id, 'notificationTitle', val)} />
+              <InsertParamButton inputRef={titleRef} onInsert={(val) => setField('notificationTitle', val)} />
             </div>
             <Button type="link" size="small" onClick={() => setLangDrawerOpen(true)}>多语言</Button>
           </div>
           <Input ref={titleRef} placeholder="请输入通知标题" maxLength={50} showCount disabled={isTemplate}
-            value={ps.notificationTitle} onChange={e => updatePushState(ps.id, 'notificationTitle', e.target.value)}
-            onBlur={() => handleFieldBlur('notificationTitle')} status={titleError ? 'error' : undefined} />
+            value={md.notificationTitle} onChange={e => setField('notificationTitle', e.target.value)}
+            onBlur={() => handleFieldBlur(`${themeMode}.notificationTitle`)} status={titleError ? 'error' : undefined} />
           {titleError && <div style={{ color: '#ff4d4f', fontSize: 13, marginTop: 4 }}>请输入通知标题</div>}
         </div>
 
@@ -171,11 +185,11 @@ function PushConfigForm() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
             <span style={{ color: '#ff4d4f' }}>*</span>
             <Text style={{ fontSize: 14 }}>通知内容</Text>
-            <InsertParamButton inputRef={contentRef} onInsert={(val) => updatePushState(ps.id, 'notificationContent', val)} />
+            <InsertParamButton inputRef={contentRef} onInsert={(val) => setField('notificationContent', val)} />
           </div>
           <Input.TextArea ref={contentRef} rows={4} placeholder="请输入通知内容" maxLength={200} showCount disabled={isTemplate}
-            value={ps.notificationContent} onChange={e => updatePushState(ps.id, 'notificationContent', e.target.value)}
-            onBlur={() => handleFieldBlur('notificationContent')} status={contentError ? 'error' : undefined} />
+            value={md.notificationContent} onChange={e => setField('notificationContent', e.target.value)}
+            onBlur={() => handleFieldBlur(`${themeMode}.notificationContent`)} status={contentError ? 'error' : undefined} />
           {contentError && <div style={{ color: '#ff4d4f', fontSize: 13, marginTop: 4 }}>请输入通知内容</div>}
         </div>
 
@@ -186,10 +200,10 @@ function PushConfigForm() {
             <Tooltip title="尺寸:95x95, 不超过300k"><InfoCircleOutlined style={{ color: '#8c8c8c', fontSize: 14 }} /></Tooltip>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <Select style={{ width: 120 }} value={ps.notificationImage.type} disabled={isTemplate}
+            <Select style={{ width: 120 }} value={md.notificationImage?.type} disabled={isTemplate}
               onChange={v => {
                 const img = { type: v, url: '', material: '' }
-                updatePushState(ps.id, 'notificationImage', img)
+                setField('notificationImage', img)
               }}
               options={[
                 { label: '自定义', value: 'custom' },
@@ -198,15 +212,15 @@ function PushConfigForm() {
               ]} />
 
             {/* 自定义模式 */}
-            {ps.notificationImage.type === 'custom' && (
-              ps.notificationImage.url ? (
+            {md.notificationImage?.type === 'custom' && (
+              md.notificationImage.url ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                   <Upload beforeUpload={handleImageUpload} showUploadList={false} accept=".jpg,.jpeg,.png">
                     <Button type="link" size="small">上传图片</Button>
                   </Upload>
-                  <Text style={{ maxWidth: 280, fontSize: 13, color: '#8c8c8c' }} ellipsis>{ps.notificationImage.url}</Text>
+                  <Text style={{ maxWidth: 280, fontSize: 13, color: '#8c8c8c' }} ellipsis>{md.notificationImage.url}</Text>
                   <Button type="text" size="small" icon={<DeleteOutlined />}
-                    onClick={() => updatePushState(ps.id, 'notificationImage', { ...ps.notificationImage, url: '' })} />
+                    onClick={() => setField('notificationImage', { ...md.notificationImage, url: '' })} />
                 </span>
               ) : (
                 <Upload beforeUpload={handleImageUpload} showUploadList={false} accept=".jpg,.jpeg,.png">
@@ -216,18 +230,18 @@ function PushConfigForm() {
             )}
 
             {/* 图片随材模式 */}
-            {ps.notificationImage.type === 'material' && (
+            {md.notificationImage?.type === 'material' && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Select style={{ width: 160 }} placeholder="选择图片随材"
-                  value={ps.notificationImage.material || undefined}
-                  onChange={v => updatePushState(ps.id, 'notificationImage', { ...ps.notificationImage, material: v, url: v })}
+                  value={md.notificationImage.material || undefined}
+                  onChange={v => setField('notificationImage', { ...md.notificationImage, material: v, url: v })}
                   options={[
                     { label: '图片随材1', value: 'material_1' },
                     { label: '图片随材2', value: 'material_2' },
                     { label: '图片随材3', value: 'material_3' },
                   ]} allowClear />
-                {ps.notificationImage.url && (
-                  <Text style={{ maxWidth: 280, fontSize: 13, color: '#8c8c8c' }} ellipsis>{ps.notificationImage.url}</Text>
+                {md.notificationImage.url && (
+                  <Text style={{ maxWidth: 280, fontSize: 13, color: '#8c8c8c' }} ellipsis>{md.notificationImage.url}</Text>
                 )}
               </span>
             )}
@@ -376,17 +390,17 @@ function PushConfigForm() {
       <MultiLangDrawer
         open={langDrawerOpen}
         onClose={() => setLangDrawerOpen(false)}
-        value={ps.i18nTexts || []}
-        onChange={(texts) => updatePushState(ps.id, 'i18nTexts', texts)}
-        enTitle={ps.notificationTitle}
-        enContent={ps.notificationContent}
+        value={md.i18nTexts || []}
+        onChange={(texts) => setField('i18nTexts', texts)}
+        enTitle={md.notificationTitle}
+        enContent={md.notificationContent}
       />
 
       {/* 实时预览 */}
       <PreviewCard
-        title={ps.notificationTitle}
-        content={ps.notificationContent}
-        imageUrl={ps.notificationImage?.url}
+        title={md.notificationTitle}
+        content={md.notificationContent}
+        imageUrl={md.notificationImage?.url}
         style={state.style}
       />
     </div>
