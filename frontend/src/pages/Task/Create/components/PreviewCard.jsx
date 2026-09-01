@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { Typography, Button, Modal, Form, Input, message } from 'antd'
+import { Typography, Button, Modal, Form, Input, Segmented, message } from 'antd'
 import { testSend } from '../api'
 
 const { Text } = Typography
 
-function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
+function PreviewCard({ title, content, imageUrl, style: notifStyle = {}, previewMode = 'light', showModeSwitch = false, onPreviewModeChange }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
@@ -41,6 +41,22 @@ function PreviewCard({ title, content, imageUrl, style: notifStyle = {} }) {
           测试发送
         </Button>
       </div>
+
+      {/* 预览模式切换（启用深色模式后展示） */}
+      {showModeSwitch && (
+        <div style={{ marginBottom: 12 }}>
+          <Segmented
+            size="small"
+            block
+            value={previewMode}
+            onChange={onPreviewModeChange}
+            options={[
+              { label: '浅色模式', value: 'light' },
+              { label: '深色模式', value: 'dark' },
+            ]}
+          />
+        </div>
+      )}
 
       {/* Phone frame */}
       <div style={{
